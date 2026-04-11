@@ -168,40 +168,56 @@ body.gate-locked .page-shell {
   font-size: 0.88rem;
 }
 
-.gallery-mobile-controls {
+.gallery-joystick-wrap {
   position: absolute;
-  left: 50%;
+  left: 1rem;
   bottom: 1rem;
   z-index: 3;
   display: none;
-  grid-template-columns: repeat(3, 3.3rem);
-  gap: 0.5rem;
-  transform: translateX(-50%);
-  padding: 0.65rem;
-  border-radius: 1.2rem;
+}
+
+.gallery-joystick {
+  position: relative;
+  width: 7.2rem;
+  height: 7.2rem;
+  border-radius: 50%;
   border: 1px solid rgba(124, 103, 72, 0.2);
-  background: rgba(250, 246, 238, 0.84);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.15) 45%, rgba(197, 174, 141, 0.18) 100%),
+    rgba(250, 246, 238, 0.84);
   backdrop-filter: blur(14px);
   box-shadow: 0 12px 32px rgba(120, 97, 65, 0.14);
+  touch-action: none;
 }
 
-.gallery-mobile-button {
-  width: 3.3rem;
-  height: 3.3rem;
-  display: grid;
-  place-items: center;
-  border-radius: 0.95rem;
-  border: 1px solid rgba(124, 103, 72, 0.18);
-  background: rgba(255, 252, 247, 0.98);
-  color: #2b2219;
-  font-size: 1.1rem;
-  box-shadow: 0 4px 14px rgba(120, 97, 65, 0.1);
-  touch-action: manipulation;
+.gallery-joystick::before {
+  content: "";
+  position: absolute;
+  inset: 0.8rem;
+  border-radius: 50%;
+  border: 1px dashed rgba(124, 103, 72, 0.2);
 }
 
-.gallery-mobile-button:active {
-  background: #efe4d4;
-  transform: translateY(1px);
+.gallery-joystick-thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 1px solid rgba(124, 103, 72, 0.22);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.92), rgba(245, 235, 220, 0.96) 58%, rgba(212, 192, 164, 0.98) 100%);
+  box-shadow:
+    0 8px 18px rgba(120, 97, 65, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+  transform: translate(-50%, -50%);
+  transition: transform 120ms ease;
+  pointer-events: none;
+}
+
+.gallery-joystick[data-active="true"] .gallery-joystick-thumb {
+  transition: none;
 }
 
 .gallery-modal {
@@ -335,6 +351,28 @@ body.gate-locked .page-shell {
   color: #fff5ad;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.gate-home-link {
+  position: absolute;
+  top: 1.2rem;
+  left: 1.2rem;
+  z-index: 1;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 245, 173, 0.2);
+  background: rgba(25, 19, 23, 0.74);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.gate-home-link:hover {
+  background: rgba(48, 34, 40, 0.88);
 }
 
 .bypass-star:hover {
@@ -589,7 +627,7 @@ body.gate-locked .page-shell {
     width: 180px;
   }
 
-  .gallery-mobile-controls {
+  .gallery-joystick-wrap {
     display: grid;
   }
 }
@@ -625,17 +663,18 @@ body.gate-locked .page-shell {
     padding: 0.55rem;
   }
 
-  .gallery-mobile-controls {
+  .gallery-joystick-wrap {
     bottom: 0.8rem;
-    grid-template-columns: repeat(3, 3rem);
-    gap: 0.45rem;
-    padding: 0.55rem;
   }
 
-  .gallery-mobile-button {
-    width: 3rem;
-    height: 3rem;
-    font-size: 1rem;
+  .gallery-joystick {
+    width: 6.4rem;
+    height: 6.4rem;
+  }
+
+  .gallery-joystick-thumb {
+    width: 2.7rem;
+    height: 2.7rem;
   }
 
 }

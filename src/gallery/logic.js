@@ -10,16 +10,25 @@ export function clampPlayerPosition(position, room) {
 }
 
 export function stepPlayer(position, input, deltaMs, room) {
-  const rotationDelta =
-    ((input.turnRight ? 1 : 0) - (input.turnLeft ? 1 : 0)) * TURN_SPEED * deltaMs;
+  const turnInput =
+    ("turnAxis" in input ? input.turnAxis : 0) +
+    (input.turnRight ? 1 : 0) -
+    (input.turnLeft ? 1 : 0);
+  const rotationDelta = turnInput * TURN_SPEED * deltaMs;
   const rotation = normalizeAngle(position.rotation + rotationDelta);
   const travel = MOVE_SPEED * deltaMs;
 
   let x = position.x;
   let z = position.z;
 
-  const forward = (input.forward ? 1 : 0) - (input.backward ? 1 : 0);
-  const strafe = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const forward =
+    ("moveAxisY" in input ? input.moveAxisY : 0) +
+    (input.forward ? 1 : 0) -
+    (input.backward ? 1 : 0);
+  const strafe =
+    ("moveAxisX" in input ? input.moveAxisX : 0) +
+    (input.right ? 1 : 0) -
+    (input.left ? 1 : 0);
 
   if (forward !== 0) {
     x += Math.sin(rotation) * travel * forward;

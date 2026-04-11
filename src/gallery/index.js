@@ -29,7 +29,8 @@ export function initGallery({ root, images = [] }) {
   const viewport = root.querySelector("[data-gallery-viewport]");
   const rendererHost = root.querySelector("[data-gallery-renderer]");
   const previewImage = root.querySelector("[data-gallery-preview-image]");
-  const mobileControls = root.querySelectorAll("[data-gallery-control]");
+  const joystick = root.querySelector("[data-gallery-joystick]");
+  const joystickThumb = root.querySelector("[data-gallery-joystick-thumb]");
   const modal = root.querySelector("[data-gallery-modal]");
   const modalImage = root.querySelector("[data-gallery-modal-image]");
   const modalTitle = root.querySelector("[data-gallery-modal-title]");
@@ -61,6 +62,9 @@ export function initGallery({ root, images = [] }) {
     right: false,
     turnLeft: false,
     turnRight: false,
+    moveAxisX: 0,
+    moveAxisY: 0,
+    turnAxis: 0,
   };
 
   let active = false;
@@ -186,17 +190,58 @@ export function initGallery({ root, images = [] }) {
     setControl(control, false);
   };
 
-  mobileControls.forEach((button) => {
-    const control = button.dataset.galleryControl;
-    const stop = () => setControl(control, false);
+  const resetJoystick = () => {
+    input.moveAxisX = 0;
+    input.moveAxisY = 0;
+    input.turnAxis = 0;
+    joystickThumb.style.transform = "translate(-50%, -50%)";
+    joystick.dataset.active = "false";
+  };
 
-    button.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      setControl(control, true);
-    });
-    button.addEventListener("pointerup", stop);
-    button.addEventListener("pointerleave", stop);
-    button.addEventListener("pointercancel", stop);
+  const updateJoystick = (event) => {
+    const rect = joystick.getBoundingClientRect();
+    const radius = rect.width * 0.5;
+    const thumbRadius = 24;
+    const centerX = rect.left + radius;
+    const centerY = rect.top + radius;
+    const rawX = event.clientX - centerX;
+    const rawY = event.clientY - centerY;
+    const distance = Math.hypot(rawX, rawY);
+    const maxDistance = radius - thumbRadius;
+    const clampRatio = distance > maxDistance ? maxDistance / distance : 1;
+    const clampedX = rawX * clampRatio;
+    const clampedY = rawY * clampRatio;
+    const normalizedX = maxDistance ? clampedX / maxDistance : 0;
+    const normalizedY = maxDistance ? clampedY / maxDistance : 0;
+
+    joystickThumb.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+    joystick.dataset.active = "true";
+
+    input.turnAxis = normalizedX;
+    input.moveAxisY = -normalizedY;
+    input.moveAxisX = 0;
+  };
+
+  joystick.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    joystick.setPointerCapture(event.pointerId);
+    updateJoystick(event);
+  });
+  joystick.addEventListener("pointermove", (event) => {
+    if (!joystick.hasPointerCapture(event.pointerId)) return;
+    updateJoystick(event);
+  });
+  joystick.addEventListener("pointerup", (event) => {
+    if (joystick.hasPointerCapture(event.pointerId)) {
+      joystick.releasePointerCapture(event.pointerId);
+    }
+    resetJoystick();
+  });
+  joystick.addEventListener("pointercancel", (event) => {
+    if (joystick.hasPointerCapture(event.pointerId)) {
+      joystick.releasePointerCapture(event.pointerId);
+    }
+    resetJoystick();
   });
 
   renderer.domElement.addEventListener("pointermove", updateRaycastTarget);
@@ -239,13 +284,10 @@ function createGalleryMarkup() {
 
       <div class="gallery-renderer" data-gallery-renderer></div>
 
-      <div class="gallery-mobile-controls" aria-label="Mobile Steuerung">
-        <button type="button" class="gallery-mobile-button" data-gallery-control="turnLeft" aria-label="Links drehen">↺</button>
-        <button type="button" class="gallery-mobile-button" data-gallery-control="forward" aria-label="Vorwärts">↑</button>
-        <button type="button" class="gallery-mobile-button" data-gallery-control="turnRight" aria-label="Rechts drehen">↻</button>
-        <button type="button" class="gallery-mobile-button" data-gallery-control="left" aria-label="Nach links">←</button>
-        <button type="button" class="gallery-mobile-button" data-gallery-control="backward" aria-label="Zurück">↓</button>
-        <button type="button" class="gallery-mobile-button" data-gallery-control="right" aria-label="Nach rechts">→</button>
+      <div class="gallery-joystick-wrap" aria-label="Mobile Steuerung">
+        <div class="gallery-joystick" data-gallery-joystick data-active="false" aria-hidden="true">
+          <div class="gallery-joystick-thumb" data-gallery-joystick-thumb></div>
+        </div>
       </div>
 
       <div class="gallery-modal" data-gallery-modal hidden>

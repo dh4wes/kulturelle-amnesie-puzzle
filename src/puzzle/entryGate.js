@@ -241,6 +241,12 @@ function createGateElement() {
   gate.setAttribute("aria-labelledby", "entry-gate-title");
 
   gate.innerHTML = `
+    <a
+      href="https://webauftritt.vercel.app/"
+      class="gate-home-link"
+      aria-label="Zur Startseite"
+    >Zur Startseite</a>
+
     <button
       type="button"
       class="bypass-star"
