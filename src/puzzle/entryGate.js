@@ -60,7 +60,6 @@ export async function initEntryGate(options = {}) {
     const bypassDialog = gate.querySelector("[data-bypass-dialog]");
     const bypassYes = gate.querySelector("[data-bypass-yes]");
     const bypassNo = gate.querySelector("[data-bypass-no]");
-    const celebration = gate.querySelector("[data-celebration]");
 
     let board = shuffleBoard(size);
     let solved = false;
@@ -114,7 +113,6 @@ export async function initEntryGate(options = {}) {
     const finishGate = () => {
       solved = true;
       bypassDialog.hidden = true;
-      celebration.hidden = false;
       renderBoard();
       announceStatus("Gelöst. Die Galerie öffnet sich gleich.");
 
@@ -257,12 +255,6 @@ function createGateElement() {
         <button type="button" class="button" data-bypass-yes>Ja</button>
         <button type="button" class="button" data-bypass-no>Nein</button>
       </div>
-    </div>
-
-    <div class="puzzle-celebration" data-celebration hidden aria-hidden="true">
-      <span>✦</span>
-      <p>Geschafft</p>
-      <span>✦</span>
     </div>
 
     <div class="entry-card">

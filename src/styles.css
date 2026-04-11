@@ -319,40 +319,6 @@ body.gate-locked .page-shell {
   gap: 0.7rem;
 }
 
-.puzzle-celebration {
-  position: absolute;
-  left: 50%;
-  top: 1.4rem;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.65rem 1rem;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  border: 1px solid rgba(255, 245, 173, 0.28);
-  background: rgba(25, 19, 23, 0.88);
-  color: #fff5ad;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
-  animation: celebration-float 1600ms ease-in-out infinite;
-}
-
-.puzzle-celebration p {
-  margin: 0;
-  color: inherit;
-}
-
-@keyframes celebration-float {
-  0%,
-  100% {
-    transform: translateX(-50%) translateY(0);
-  }
-
-  50% {
-    transform: translateX(-50%) translateY(-4px);
-  }
-}
-
 .entry-gate.is-hiding {
   opacity: 0;
   visibility: hidden;
