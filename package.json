@@ -1,0 +1,15 @@
+{
+  "name": "kulturelle-amnesie-puzzle",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vite --host 0.0.0.0 --port 4173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "three": "^0.183.2",
+    "vite": "^8.0.8"
+  }
+}
