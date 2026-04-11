@@ -29,6 +29,7 @@ export function initGallery({ root, images = [] }) {
   const viewport = root.querySelector("[data-gallery-viewport]");
   const rendererHost = root.querySelector("[data-gallery-renderer]");
   const previewImage = root.querySelector("[data-gallery-preview-image]");
+  const mobileControls = root.querySelectorAll("[data-gallery-control]");
   const modal = root.querySelector("[data-gallery-modal]");
   const modalImage = root.querySelector("[data-gallery-modal-image]");
   const modalTitle = root.querySelector("[data-gallery-modal-title]");
@@ -185,6 +186,19 @@ export function initGallery({ root, images = [] }) {
     setControl(control, false);
   };
 
+  mobileControls.forEach((button) => {
+    const control = button.dataset.galleryControl;
+    const stop = () => setControl(control, false);
+
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      setControl(control, true);
+    });
+    button.addEventListener("pointerup", stop);
+    button.addEventListener("pointerleave", stop);
+    button.addEventListener("pointercancel", stop);
+  });
+
   renderer.domElement.addEventListener("pointermove", updateRaycastTarget);
   renderer.domElement.addEventListener("click", handleCanvasClick);
   modalClose.addEventListener("click", closeModal);
@@ -224,6 +238,15 @@ function createGalleryMarkup() {
       </div>
 
       <div class="gallery-renderer" data-gallery-renderer></div>
+
+      <div class="gallery-mobile-controls" aria-label="Mobile Steuerung">
+        <button type="button" class="gallery-mobile-button" data-gallery-control="turnLeft" aria-label="Links drehen">↺</button>
+        <button type="button" class="gallery-mobile-button" data-gallery-control="forward" aria-label="Vorwärts">↑</button>
+        <button type="button" class="gallery-mobile-button" data-gallery-control="turnRight" aria-label="Rechts drehen">↻</button>
+        <button type="button" class="gallery-mobile-button" data-gallery-control="left" aria-label="Nach links">←</button>
+        <button type="button" class="gallery-mobile-button" data-gallery-control="backward" aria-label="Zurück">↓</button>
+        <button type="button" class="gallery-mobile-button" data-gallery-control="right" aria-label="Nach rechts">→</button>
+      </div>
 
       <div class="gallery-modal" data-gallery-modal hidden>
         <div class="gallery-modal-card" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title">
