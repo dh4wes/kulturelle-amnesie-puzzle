@@ -138,11 +138,12 @@ export function initGallery({ root, images = [] }) {
 
   const openModal = (painting) => {
     const title = `Werk ${painting.userData.frame.id}`;
+    const imageSrc = resolveArtworkSrc(painting.userData.frame.image);
     modal.hidden = false;
     modalTitle.textContent = title;
-    modalImage.src = painting.userData.frame.image;
+    modalImage.src = imageSrc;
     modalImage.alt = `${title} in Nahansicht`;
-    modalNotes.value = noteStorage.get(painting.userData.frame.image) ?? "";
+    modalNotes.value = noteStorage.get(imageSrc) ?? "";
     modalClose.focus();
   };
 
@@ -352,11 +353,11 @@ function addTrim(scene, width, depth) {
 
 function addPaintings(scene, frames, interactables, previewImage) {
   const loader = new THREE.TextureLoader();
-  previewImage.src = frames[0]?.image ?? "";
+  previewImage.src = frames[0] ? resolveArtworkSrc(frames[0].image) : "";
 
   frames.forEach((frame) => {
     const group = new THREE.Group();
-    const artTexture = loader.load(frame.image);
+    const artTexture = loader.load(resolveArtworkSrc(frame.image));
     artTexture.colorSpace = THREE.SRGBColorSpace;
 
     const frameWidth = 1.28;
@@ -440,9 +441,18 @@ function syncCamera(camera, player) {
 function updateNearestPreview(player, frames, previewImage) {
   const nearest = getNearestFrame(player, frames);
   if (nearest) {
-    previewImage.src = nearest.image;
+    previewImage.src = resolveArtworkSrc(nearest.image);
     previewImage.alt = "Vorschau eines Werks in der Galerie";
   }
+}
+
+function resolveArtworkSrc(imagePath) {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("/puzzle-images/")) return imagePath;
+  if (imagePath.startsWith("/")) return imagePath;
+
+  const filename = imagePath.split("/").pop();
+  return `/puzzle-images/${filename}`;
 }
 
 function getNearestFrame(player, frames) {
