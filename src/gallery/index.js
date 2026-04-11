@@ -28,8 +28,6 @@ export function initGallery({ root, images = [] }) {
 
   const viewport = root.querySelector("[data-gallery-viewport]");
   const rendererHost = root.querySelector("[data-gallery-renderer]");
-  const resetButton = root.querySelector("[data-gallery-reset]");
-  const touchButtons = root.querySelectorAll("[data-control]");
   const previewImage = root.querySelector("[data-gallery-preview-image]");
   const modal = root.querySelector("[data-gallery-modal]");
   const modalImage = root.querySelector("[data-gallery-modal-image]");
@@ -186,16 +184,6 @@ export function initGallery({ root, images = [] }) {
     setControl(control, false);
   };
 
-  touchButtons.forEach((button) => {
-    const control = button.dataset.control;
-    const stop = () => setControl(control, false);
-
-    button.addEventListener("pointerdown", () => setControl(control, true));
-    button.addEventListener("pointerup", stop);
-    button.addEventListener("pointerleave", stop);
-    button.addEventListener("pointercancel", stop);
-  });
-
   renderer.domElement.addEventListener("pointermove", updateRaycastTarget);
   renderer.domElement.addEventListener("click", handleCanvasClick);
   modalClose.addEventListener("click", closeModal);
@@ -206,12 +194,6 @@ export function initGallery({ root, images = [] }) {
   });
   modalNotes.addEventListener("input", () => {
     noteStorage.set(modalImage.src, modalNotes.value);
-  });
-
-  resetButton.addEventListener("click", () => {
-    player = { x: 0, z: 620, rotation: Math.PI };
-    renderFrame();
-    viewport.focus();
   });
 
   window.addEventListener("resize", resizeRenderer);
