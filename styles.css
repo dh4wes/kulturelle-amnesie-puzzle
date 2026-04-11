@@ -103,12 +103,14 @@ body.gate-locked .page-shell {
 }
 
 .gallery-stage {
+  height: calc(100vh - clamp(2.5rem, 6vw, 5rem));
   min-height: calc(100vh - clamp(2.5rem, 6vw, 5rem));
 }
 
 .gallery-viewport {
   position: relative;
   height: 100%;
+  min-height: 100%;
   overflow: hidden;
   border-radius: 1.7rem;
   border: 1px solid var(--border);
@@ -592,6 +594,7 @@ body.gate-locked .page-shell {
   }
 
   .gallery-viewport {
+    height: calc(100vh - 2rem);
     min-height: calc(100vh - 2rem);
   }
 
