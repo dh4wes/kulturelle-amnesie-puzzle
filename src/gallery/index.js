@@ -217,7 +217,7 @@ export function initGallery({ root, images = [] }) {
     joystickThumb.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
     joystick.dataset.active = "true";
 
-    input.turnAxis = normalizedX;
+    input.turnAxis = -normalizedX;
     input.moveAxisY = -normalizedY;
     input.moveAxisX = 0;
   };
