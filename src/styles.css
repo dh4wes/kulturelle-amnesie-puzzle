@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Samoa";
+  src: url("/fonts/samoa.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --bg: #120e12;
   --bg-elevated: rgba(32, 23, 27, 0.86);
@@ -9,8 +17,8 @@
   --accent-soft: rgba(241, 91, 63, 0.2);
   --border: rgba(255, 244, 228, 0.18);
   --shadow: 0 28px 90px rgba(0, 0, 0, 0.4);
-  --font-display: "Georgia", "Times New Roman", serif;
-  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Samoa", "Georgia", "Times New Roman", serif;
+  --font-body: "Samoa", "Georgia", "Times New Roman", serif;
 }
 
 *,
