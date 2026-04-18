@@ -49,6 +49,14 @@ function applySelectedFont(siteBaseUrl, fontId) {
   document.documentElement.style.setProperty("--font-display", fontStack);
 }
 
+function applyBackgroundColor(value) {
+  if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) {
+    return;
+  }
+
+  document.documentElement.style.setProperty("--site-background", value);
+}
+
 export async function applySiteAppearance() {
   const siteBaseUrl = getSiteBaseUrl();
   const appearanceUrl = new URL("/api/appearance", siteBaseUrl);
@@ -65,7 +73,10 @@ export async function applySiteAppearance() {
     }
 
     const payload = await response.json();
-    const fontId = payload?.appearance?.fontId;
+    const appearance = payload?.appearance;
+    const fontId = appearance?.fontId;
+
+    applyBackgroundColor(appearance?.desktopBackgroundColor);
 
     if (typeof fontId !== "string" || fontId === "system") {
       applySystemFont();
