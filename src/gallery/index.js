@@ -15,6 +15,17 @@ const EYE_HEIGHT = 1.67;
 const CEILING_Y = ROOM_HEIGHT;
 const HALF_WIDTH = (ROOM.maxX - ROOM.minX) * SCALE * 0.5;
 const HALF_DEPTH = (ROOM.maxZ - ROOM.minZ) * SCALE * 0.5;
+const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
+const NAVIGATION_ITEMS = [
+  { label: "Horch mal", href: "/featured" },
+  { label: "Texte/Gedichte", href: "/works" },
+  { label: "Projekte", href: "/archive" },
+  { label: "Nachrichten", href: "/guestbook" },
+  { label: "Kontakt", href: "/kontakt" },
+  { label: "Fragen; des Monats? des Tages?", href: "/fragen" },
+  { label: "Lebenslauf", href: "/lebenslauf" },
+  { label: "Tattoo", href: "/tattoo" },
+];
 
 export function initGallery({ root, images = [] }) {
   if (!root) {
@@ -34,7 +45,7 @@ export function initGallery({ root, images = [] }) {
   const modal = root.querySelector("[data-gallery-modal]");
   const modalImage = root.querySelector("[data-gallery-modal-image]");
   const modalTitle = root.querySelector("[data-gallery-modal-title]");
-  const modalNotes = root.querySelector("[data-gallery-notes]");
+  const modalLink = root.querySelector("[data-gallery-link]");
   const modalClose = root.querySelector("[data-gallery-close]");
 
   const scene = new THREE.Scene();
@@ -53,7 +64,6 @@ export function initGallery({ root, images = [] }) {
 
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
-  const noteStorage = new Map();
   const interactables = [];
   const input = {
     forward: false,
@@ -144,11 +154,13 @@ export function initGallery({ root, images = [] }) {
   const openModal = (painting) => {
     const title = `Werk ${painting.userData.frame.id}`;
     const imageSrc = resolveArtworkSrc(painting.userData.frame.image);
+    const navigationItem = getNavigationItem(painting.userData.frame);
     modal.hidden = false;
     modalTitle.textContent = title;
     modalImage.src = imageSrc;
     modalImage.alt = `${title} in Nahansicht`;
-    modalNotes.value = noteStorage.get(imageSrc) ?? "";
+    modalLink.textContent = `${navigationItem.label} öffnen`;
+    modalLink.href = resolveSiteHref(navigationItem.href);
     modalClose.focus();
   };
 
@@ -252,10 +264,6 @@ export function initGallery({ root, images = [] }) {
       closeModal();
     }
   });
-  modalNotes.addEventListener("input", () => {
-    noteStorage.set(modalImage.src, modalNotes.value);
-  });
-
   window.addEventListener("resize", resizeRenderer);
   document.addEventListener("keydown", handleKeyDown);
   document.addEventListener("keyup", handleKeyUp);
@@ -295,14 +303,31 @@ function createGalleryMarkup() {
           <button type="button" class="gallery-modal-close" data-gallery-close aria-label="Nahansicht schließen">×</button>
           <h2 id="gallery-modal-title" data-gallery-modal-title></h2>
           <img data-gallery-modal-image alt="" />
-          <label class="gallery-notes">
-            <span>Notiz</span>
-            <textarea data-gallery-notes rows="3" placeholder="Kurze Beobachtung eingeben"></textarea>
-          </label>
+          <a class="gallery-site-link" data-gallery-link href="${new URL(NAVIGATION_ITEMS[0].href, SITE_FALLBACK_URL).toString()}">${NAVIGATION_ITEMS[0].label} öffnen</a>
         </div>
       </div>
     </section>
   `;
+}
+
+function getNavigationItem(frame) {
+  return NAVIGATION_ITEMS[(frame.id - 1) % NAVIGATION_ITEMS.length];
+}
+
+function resolveSiteHref(path) {
+  const params = new URLSearchParams(window.location.search);
+  const returnUrl = params.get("returnUrl");
+  let baseUrl = SITE_FALLBACK_URL;
+
+  if (returnUrl) {
+    try {
+      baseUrl = new URL(returnUrl).origin;
+    } catch {
+      baseUrl = SITE_FALLBACK_URL;
+    }
+  }
+
+  return new URL(path, baseUrl).toString();
 }
 
 function buildMuseum(scene, frames, interactables, previewImage) {
