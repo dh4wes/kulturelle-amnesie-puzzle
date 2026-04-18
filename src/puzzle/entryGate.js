@@ -273,7 +273,7 @@ function createGateElement() {
   gate.setAttribute("aria-label", "Puzzle");
 
   gate.innerHTML = `
-    <h1 class="gate-title">Mein Webauftritt</h1>
+    <h1 class="gate-title">Kulturelle Amnesie</h1>
 
     <button
       type="button"
