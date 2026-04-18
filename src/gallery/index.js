@@ -39,7 +39,10 @@ export function initGallery({ root, images = [] }) {
 
   const viewport = root.querySelector("[data-gallery-viewport]");
   const rendererHost = root.querySelector("[data-gallery-renderer]");
-  const previewImage = root.querySelector("[data-gallery-preview-image]");
+  const mapToggle = root.querySelector("[data-gallery-map-toggle]");
+  const mapPanel = root.querySelector("[data-gallery-map-panel]");
+  const mapTrack = root.querySelector("[data-gallery-map-track]");
+  const mapPlayer = root.querySelector("[data-gallery-map-player]");
   const joystick = root.querySelector("[data-gallery-joystick]");
   const joystickThumb = root.querySelector("[data-gallery-joystick-thumb]");
   const modal = root.querySelector("[data-gallery-modal]");
@@ -98,11 +101,12 @@ export function initGallery({ root, images = [] }) {
 
   const renderFrame = () => {
     syncCamera(camera, player);
-    updateNearestPreview(player, frames, previewImage);
+    updateMiniMapPlayer(player, mapPlayer);
     renderer.render(scene, camera);
   };
 
-  buildMuseum(scene, frames, interactables, previewImage);
+  buildMiniMapMarkers(frames, mapTrack);
+  buildMuseum(scene, frames, interactables);
   syncCamera(camera, player);
   renderFrame();
 
@@ -255,6 +259,11 @@ export function initGallery({ root, images = [] }) {
     }
     resetJoystick();
   });
+  mapToggle.addEventListener("click", () => {
+    const collapsed = mapPanel.dataset.collapsed !== "true";
+    mapPanel.dataset.collapsed = String(collapsed);
+    mapToggle.setAttribute("aria-expanded", String(!collapsed));
+  });
 
   renderer.domElement.addEventListener("pointermove", updateRaycastTarget);
   renderer.domElement.addEventListener("click", handleCanvasClick);
@@ -286,8 +295,22 @@ export function initGallery({ root, images = [] }) {
 function createGalleryMarkup() {
   return `
     <section class="gallery-viewport" data-gallery-viewport tabindex="0" aria-label="Begehbare Galerie">
-      <div class="gallery-preview">
-        <img data-gallery-preview-image alt="" />
+      <div class="gallery-map" data-gallery-map-panel data-collapsed="false">
+        <button
+          type="button"
+          class="gallery-map-toggle"
+          data-gallery-map-toggle
+          aria-expanded="true"
+          aria-controls="gallery-map-content"
+          aria-label="Galeriekarte ein- oder ausklappen"
+        >
+          Karte
+        </button>
+        <div class="gallery-map-content" id="gallery-map-content">
+          <div class="gallery-map-track" data-gallery-map-track aria-label="Galeriekarte">
+            <span class="gallery-map-player" data-gallery-map-player aria-hidden="true"></span>
+          </div>
+        </div>
       </div>
 
       <div class="gallery-renderer" data-gallery-renderer></div>
@@ -330,7 +353,43 @@ function resolveSiteHref(path) {
   return new URL(path, baseUrl).toString();
 }
 
-function buildMuseum(scene, frames, interactables, previewImage) {
+function buildMiniMapMarkers(frames, mapTrack) {
+  const markerFragment = document.createDocumentFragment();
+
+  frames.forEach((frame) => {
+    const navigationItem = getNavigationItem(frame);
+    const marker = document.createElement("a");
+    marker.className = "gallery-map-marker";
+    marker.href = resolveSiteHref(navigationItem.href);
+    marker.setAttribute("aria-label", `${navigationItem.label} öffnen`);
+    marker.style.left = `${roomXToPercent(frame.x)}%`;
+    marker.style.top = `${roomZToPercent(frame.z)}%`;
+    const label = document.createElement("span");
+    label.textContent = navigationItem.label;
+    marker.appendChild(label);
+    markerFragment.appendChild(marker);
+  });
+
+  mapTrack.appendChild(markerFragment);
+}
+
+function updateMiniMapPlayer(player, mapPlayer) {
+  mapPlayer.style.left = `${roomXToPercent(player.x)}%`;
+  mapPlayer.style.top = `${roomZToPercent(player.z)}%`;
+  mapPlayer.style.transform = `translate(-50%, -50%) rotate(${player.rotation}rad)`;
+}
+
+function roomXToPercent(x) {
+  const clampedX = Math.min(Math.max(x, ROOM.minX), ROOM.maxX);
+  return ((clampedX - ROOM.minX) / (ROOM.maxX - ROOM.minX)) * 100;
+}
+
+function roomZToPercent(z) {
+  const clampedZ = Math.min(Math.max(z, ROOM.minZ), ROOM.maxZ);
+  return ((clampedZ - ROOM.minZ) / (ROOM.maxZ - ROOM.minZ)) * 100;
+}
+
+function buildMuseum(scene, frames, interactables) {
   const width = HALF_WIDTH * 2;
   const depth = HALF_DEPTH * 2;
 
@@ -405,7 +464,7 @@ function buildMuseum(scene, frames, interactables, previewImage) {
   scene.add(ceiling);
 
   addTrim(scene, width, depth);
-  addPaintings(scene, frames, interactables, previewImage);
+  addPaintings(scene, frames, interactables);
 }
 
 function createWall(width, height, position, rotation, material) {
@@ -441,9 +500,8 @@ function addTrim(scene, width, depth) {
   });
 }
 
-function addPaintings(scene, frames, interactables, previewImage) {
+function addPaintings(scene, frames, interactables) {
   const loader = new THREE.TextureLoader();
-  previewImage.src = frames[0] ? resolveArtworkSrc(frames[0].image) : "";
 
   frames.forEach((frame) => {
     const group = new THREE.Group();
@@ -528,14 +586,6 @@ function syncCamera(camera, player) {
   camera.lookAt(position.clone().add(direction));
 }
 
-function updateNearestPreview(player, frames, previewImage) {
-  const nearest = getNearestFrame(player, frames);
-  if (nearest) {
-    previewImage.src = resolveArtworkSrc(nearest.image);
-    previewImage.alt = "Vorschau eines Werks in der Galerie";
-  }
-}
-
 function resolveArtworkSrc(imagePath) {
   if (!imagePath) return "";
   if (imagePath.startsWith("/puzzle-images/")) return imagePath;
@@ -543,23 +593,6 @@ function resolveArtworkSrc(imagePath) {
 
   const filename = imagePath.split("/").pop();
   return `/puzzle-images/${filename}`;
-}
-
-function getNearestFrame(player, frames) {
-  let best = null;
-  let bestDistance = Infinity;
-
-  frames.forEach((frame) => {
-    const dx = player.x - frame.x;
-    const dz = player.z - frame.z;
-    const distance = Math.hypot(dx, dz);
-    if (distance < bestDistance) {
-      best = frame;
-      bestDistance = distance;
-    }
-  });
-
-  return best;
 }
 
 function createFloorTexture() {
