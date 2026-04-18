@@ -472,26 +472,18 @@ body.gate-locked .page-shell {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
 }
 
-.gate-home-link {
+.gate-title {
   position: absolute;
   top: 1.2rem;
   left: 1.2rem;
   z-index: 1;
-  min-height: 2.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.55rem 0.95rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 245, 173, 0.2);
-  background: rgba(25, 19, 23, 0.74);
+  margin: 0;
   color: var(--text);
-  text-decoration: none;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
-}
-
-.gate-home-link:hover {
-  background: rgba(48, 34, 40, 0.88);
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 5vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
 }
 
 .bypass-star:hover {

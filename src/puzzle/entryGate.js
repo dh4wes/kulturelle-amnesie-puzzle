@@ -273,11 +273,7 @@ function createGateElement() {
   gate.setAttribute("aria-label", "Puzzle");
 
   gate.innerHTML = `
-    <a
-      href="${resolveSitePageHref("/")}"
-      class="gate-home-link"
-      aria-label="Zur Startseite"
-    >Zur Startseite</a>
+    <h1 class="gate-title">Mein Webauftritt</h1>
 
     <button
       type="button"
