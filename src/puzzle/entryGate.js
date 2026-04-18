@@ -16,6 +16,7 @@ import {
 const SESSION_FLAG = "__kulturelle_amnesie_gate_open__";
 const MOBILE_MEDIA = "(max-width: 479px)";
 const SOLVED_HOLD_MS = 5000;
+const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
 
 export async function initEntryGate(options = {}) {
   const { onSolved } = options;
@@ -52,6 +53,9 @@ export async function initEntryGate(options = {}) {
 
     const boardElement = gate.querySelector("[data-puzzle-board]");
     const statusElement = gate.querySelector("[data-status]");
+    const infoToggle = gate.querySelector("[data-info-toggle]");
+    const infoOverlay = gate.querySelector("[data-info-overlay]");
+    const infoClose = gate.querySelector("[data-info-close]");
     const referenceToggle = gate.querySelector("[data-reference-toggle]");
     const referenceFrame = gate.querySelector("[data-reference-frame]");
     const referenceImage = gate.querySelector("[data-reference-image]");
@@ -157,7 +161,28 @@ export async function initEntryGate(options = {}) {
       announceStatus("Puzzle neu gemischt.");
     };
 
+    const openInfoOverlay = () => {
+      infoOverlay.hidden = false;
+      infoToggle.setAttribute("aria-expanded", "true");
+      infoClose.focus();
+    };
+
+    const closeInfoOverlay = () => {
+      infoOverlay.hidden = true;
+      infoToggle.setAttribute("aria-expanded", "false");
+      infoToggle.focus();
+    };
+
     gate.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !infoOverlay.hidden) {
+        closeInfoOverlay();
+        return;
+      }
+
+      if (!infoOverlay.hidden) {
+        return;
+      }
+
       const tileIndex = getMoveTargetFromKey(event.key, board);
       if (tileIndex === null) return;
 
@@ -169,6 +194,13 @@ export async function initEntryGate(options = {}) {
       referenceFrame.hidden = !referenceToggle.checked;
     });
 
+    infoToggle.addEventListener("click", openInfoOverlay);
+    infoClose.addEventListener("click", closeInfoOverlay);
+    infoOverlay.addEventListener("click", (event) => {
+      if (event.target === infoOverlay) {
+        closeInfoOverlay();
+      }
+    });
     shuffleButton.addEventListener("click", handleShuffle);
     bypassStar.addEventListener("click", () => {
       const nextHidden = !bypassDialog.hidden;
@@ -238,11 +270,11 @@ function createGateElement() {
   const gate = document.createElement("section");
   gate.className = "entry-gate";
   gate.tabIndex = -1;
-  gate.setAttribute("aria-labelledby", "entry-gate-title");
+  gate.setAttribute("aria-label", "Puzzle");
 
   gate.innerHTML = `
     <a
-      href="https://webauftritt.vercel.app/"
+      href="${resolveSitePageHref("/")}"
       class="gate-home-link"
       aria-label="Zur Startseite"
     >Zur Startseite</a>
@@ -269,36 +301,74 @@ function createGateElement() {
           class="puzzle-board"
           data-puzzle-board
           role="group"
-          aria-describedby="entry-gate-help entry-gate-status"
+          aria-describedby="entry-gate-status"
         ></div>
         <p id="entry-gate-status" class="puzzle-status" data-status aria-live="polite"></p>
       </div>
 
-      <div class="control-panel">
-        <div>
-          <h2 id="entry-gate-title">Löse das Puzzle, um einzutreten</h2>
-          <p id="entry-gate-help">Setze das Bild wieder zusammen oder nutze den Stern zum Überspringen.</p>
-        </div>
+      <button
+        type="button"
+        class="gate-info-wave"
+        data-info-toggle
+        aria-label="Puzzle-Hinweise öffnen"
+        aria-expanded="false"
+        aria-controls="entry-gate-info"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
-        <div class="controls">
-          <label class="toggle">
-            <input type="checkbox" data-reference-toggle />
-            <span>Referenz zeigen</span>
-          </label>
-          <button type="button" class="button" data-shuffle>Neu mischen</button>
-        </div>
+      <div class="gate-info-overlay" data-info-overlay hidden>
+        <div
+          class="control-panel gate-info-card"
+          id="entry-gate-info"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="entry-gate-title"
+        >
+          <button type="button" class="gate-info-close" data-info-close aria-label="Puzzle-Hinweise schließen">×</button>
+          <div>
+            <h2 id="entry-gate-title">Löse das Puzzle, um einzutreten</h2>
+            <p id="entry-gate-help">Setze das Bild wieder zusammen oder nutze den Stern zum Überspringen.</p>
+          </div>
 
-        <div class="reference-frame" data-reference-frame hidden>
-          <img data-reference-image alt="" />
-        </div>
+          <div class="controls">
+            <label class="toggle">
+              <input type="checkbox" data-reference-toggle />
+              <span>Referenz zeigen</span>
+            </label>
+            <button type="button" class="button" data-shuffle>Neu mischen</button>
+          </div>
 
-        <p class="gate-note">
-          Verschiebe die Kacheln, bis das Bild vollständig ist. Danach öffnet sich
-          die Galerie.
-        </p>
+          <div class="reference-frame" data-reference-frame hidden>
+            <img data-reference-image alt="" />
+          </div>
+
+          <p class="gate-note">
+            Verschiebe die Kacheln, bis das Bild vollständig ist. Danach öffnet sich
+            die Galerie.
+          </p>
+        </div>
       </div>
     </div>
   `;
 
   return gate;
+}
+
+function resolveSitePageHref(path) {
+  const params = new URLSearchParams(window.location.search);
+  const returnUrl = params.get("returnUrl");
+  let baseUrl = SITE_FALLBACK_URL;
+
+  if (returnUrl) {
+    try {
+      baseUrl = new URL(returnUrl).origin;
+    } catch {
+      baseUrl = SITE_FALLBACK_URL;
+    }
+  }
+
+  return new URL(path, baseUrl).toString();
 }

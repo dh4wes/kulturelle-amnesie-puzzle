@@ -42,6 +42,7 @@ export function initGallery({ root, images = [] }) {
   const mapToggle = root.querySelector("[data-gallery-map-toggle]");
   const mapPanel = root.querySelector("[data-gallery-map-panel]");
   const mapTrack = root.querySelector("[data-gallery-map-track]");
+  const mapList = root.querySelector("[data-gallery-map-list]");
   const mapPlayer = root.querySelector("[data-gallery-map-player]");
   const joystick = root.querySelector("[data-gallery-joystick]");
   const joystickThumb = root.querySelector("[data-gallery-joystick-thumb]");
@@ -105,7 +106,7 @@ export function initGallery({ root, images = [] }) {
     renderer.render(scene, camera);
   };
 
-  buildMiniMapMarkers(frames, mapTrack);
+  buildMiniMapMarkers(frames, mapTrack, mapList);
   buildMuseum(scene, frames, interactables);
   syncCamera(camera, player);
   renderFrame();
@@ -310,6 +311,7 @@ function createGalleryMarkup() {
           <div class="gallery-map-track" data-gallery-map-track aria-label="Galeriekarte">
             <span class="gallery-map-player" data-gallery-map-player aria-hidden="true"></span>
           </div>
+          <div class="gallery-map-list" data-gallery-map-list aria-label="Direkte Navigation"></div>
         </div>
       </div>
 
@@ -326,7 +328,7 @@ function createGalleryMarkup() {
           <button type="button" class="gallery-modal-close" data-gallery-close aria-label="Nahansicht schließen">×</button>
           <h2 id="gallery-modal-title" data-gallery-modal-title></h2>
           <img data-gallery-modal-image alt="" />
-          <a class="gallery-site-link" data-gallery-link href="${new URL(NAVIGATION_ITEMS[0].href, SITE_FALLBACK_URL).toString()}">${NAVIGATION_ITEMS[0].label} öffnen</a>
+          <a class="gallery-site-link" data-gallery-link href="${resolveSiteHref(NAVIGATION_ITEMS[0].href)}">${NAVIGATION_ITEMS[0].label} öffnen</a>
         </div>
       </div>
     </section>
@@ -338,6 +340,10 @@ function getNavigationItem(frame) {
 }
 
 function resolveSiteHref(path) {
+  return resolveSiteGalleryHandoff(path);
+}
+
+function resolveSiteGalleryHandoff(path) {
   const params = new URLSearchParams(window.location.search);
   const returnUrl = params.get("returnUrl");
   let baseUrl = SITE_FALLBACK_URL;
@@ -350,27 +356,39 @@ function resolveSiteHref(path) {
     }
   }
 
-  return new URL(path, baseUrl).toString();
+  const handoffUrl = new URL("/gallery", baseUrl);
+  handoffUrl.searchParams.set("to", path);
+  return handoffUrl.toString();
 }
 
-function buildMiniMapMarkers(frames, mapTrack) {
+function buildMiniMapMarkers(frames, mapTrack, mapList) {
   const markerFragment = document.createDocumentFragment();
+  const listFragment = document.createDocumentFragment();
 
   frames.forEach((frame) => {
     const navigationItem = getNavigationItem(frame);
+    const href = resolveSiteHref(navigationItem.href);
     const marker = document.createElement("a");
     marker.className = "gallery-map-marker";
-    marker.href = resolveSiteHref(navigationItem.href);
+    marker.href = href;
     marker.setAttribute("aria-label", `${navigationItem.label} öffnen`);
     marker.style.left = `${roomXToPercent(frame.x)}%`;
     marker.style.top = `${roomZToPercent(frame.z)}%`;
     const label = document.createElement("span");
+    label.className = "sr-only";
     label.textContent = navigationItem.label;
     marker.appendChild(label);
     markerFragment.appendChild(marker);
+
+    const listLink = document.createElement("a");
+    listLink.className = "gallery-map-list-link";
+    listLink.href = href;
+    listLink.textContent = navigationItem.label;
+    listFragment.appendChild(listLink);
   });
 
   mapTrack.appendChild(markerFragment);
+  mapList.appendChild(listFragment);
 }
 
 function updateMiniMapPlayer(player, mapPlayer) {

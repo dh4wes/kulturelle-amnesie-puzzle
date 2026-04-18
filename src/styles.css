@@ -137,7 +137,7 @@ body.gate-locked .page-shell {
   top: 1rem;
   right: 1rem;
   z-index: 3;
-  width: min(280px, calc(100% - 2rem));
+  width: min(320px, calc(100% - 2rem));
   border-radius: 1.1rem;
   border: 1px solid rgba(124, 103, 72, 0.18);
   background: rgba(250, 246, 238, 0.48);
@@ -229,27 +229,33 @@ body.gate-locked .page-shell {
   box-shadow: 0 5px 14px rgba(43, 34, 25, 0.22);
 }
 
-.gallery-map-marker span {
-  position: absolute;
-  right: calc(100% + 0.4rem);
-  top: 50%;
-  max-width: 8rem;
-  transform: translateY(-50%);
-  padding: 0.22rem 0.4rem;
-  border-radius: 0.45rem;
-  background: rgba(255, 252, 247, 0.76);
+.gallery-map-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0 0.85rem 0.85rem;
+}
+
+.gallery-map-list-link {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgba(43, 34, 25, 0.12);
+  background: rgba(255, 252, 247, 0.48);
   color: #2b2219;
-  font-size: 0.62rem;
-  font-weight: 700;
+  font-size: 0.66rem;
+  font-weight: 750;
   line-height: 1.1;
-  opacity: 0;
-  pointer-events: none;
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  text-decoration: none;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.gallery-map-marker:hover span,
-.gallery-map-marker:focus-visible span {
-  opacity: 1;
+.gallery-map-list-link:hover,
+.gallery-map-list-link:focus-visible {
+  background: rgba(255, 252, 247, 0.82);
 }
 
 .gallery-map-player {
@@ -513,10 +519,11 @@ body.gate-locked .page-shell {
 }
 
 .entry-card {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
-  width: min(1080px, 100%);
+  width: min(720px, 100%);
   padding: clamp(1rem, 3vw, 1.4rem);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -527,6 +534,7 @@ body.gate-locked .page-shell {
 .puzzle-area {
   display: grid;
   gap: 1rem;
+  justify-items: center;
 }
 
 .puzzle-board {
@@ -607,6 +615,7 @@ body.gate-locked .page-shell {
   margin: 0;
   color: var(--muted);
   min-height: 1.3rem;
+  text-align: center;
 }
 
 .control-panel {
@@ -626,6 +635,106 @@ body.gate-locked .page-shell {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
+}
+
+.gate-info-wave {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  display: flex;
+  width: 4.8rem;
+  height: 2.6rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.22rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 245, 173, 0.28);
+  background: rgba(25, 19, 23, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(255, 245, 173, 0.06),
+    0 12px 28px rgba(0, 0, 0, 0.28),
+    0 0 28px rgba(255, 245, 173, 0.16);
+  cursor: pointer;
+}
+
+.gate-info-wave span {
+  display: block;
+  width: 0.9rem;
+  border-top: 2px solid rgba(255, 245, 173, 0.92);
+  border-radius: 999px;
+  animation: gateInfoWave 2.4s ease-in-out infinite;
+}
+
+.gate-info-wave span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.gate-info-wave span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.gate-info-wave:hover {
+  background: rgba(48, 34, 40, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(255, 245, 173, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.32),
+    0 0 34px rgba(255, 245, 173, 0.24);
+}
+
+@keyframes gateInfoWave {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: translateY(0) scaleX(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-0.16rem) scaleX(1.16);
+  }
+}
+
+.gate-info-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(9, 8, 11, 0.34);
+  backdrop-filter: blur(10px);
+}
+
+.gate-info-overlay[hidden] {
+  display: none;
+}
+
+.gate-info-card {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: min(720px, calc(100vh - 2rem));
+  overflow: auto;
+  padding: 1.2rem;
+  border-radius: 1.3rem;
+  border: 1px solid var(--border);
+  background: rgba(24, 18, 22, 0.94);
+  box-shadow: var(--shadow);
+}
+
+.gate-info-close {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
 }
 
 .meta {
@@ -729,7 +838,7 @@ body.gate-locked .page-shell {
   }
 
   .gallery-map {
-    width: 210px;
+    width: 240px;
   }
 
   .gallery-joystick-wrap {
