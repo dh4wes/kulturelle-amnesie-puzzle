@@ -400,7 +400,7 @@ function buildMiniMapMarkers(frames, mapTrack, mapList, onSelectFrame) {
 }
 
 function getPlayerViewForFrame(frame) {
-  const inset = 120;
+  const inset = 220;
 
   if (frame.wall === "front") {
     return { x: frame.x, z: ROOM.minZ + inset, rotation: Math.PI };
