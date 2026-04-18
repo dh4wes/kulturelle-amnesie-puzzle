@@ -106,7 +106,14 @@ export function initGallery({ root, images = [] }) {
     renderer.render(scene, camera);
   };
 
-  buildMiniMapMarkers(frames, mapTrack, mapList);
+  const moveToFrame = (frame) => {
+    modal.hidden = true;
+    player = getPlayerViewForFrame(frame);
+    renderFrame();
+    viewport.focus();
+  };
+
+  buildMiniMapMarkers(frames, mapTrack, mapList, moveToFrame);
   buildMuseum(scene, frames, interactables);
   syncCamera(camera, player);
   renderFrame();
@@ -361,34 +368,57 @@ function resolveSiteGalleryHandoff(path) {
   return handoffUrl.toString();
 }
 
-function buildMiniMapMarkers(frames, mapTrack, mapList) {
+function buildMiniMapMarkers(frames, mapTrack, mapList, onSelectFrame) {
   const markerFragment = document.createDocumentFragment();
   const listFragment = document.createDocumentFragment();
 
   frames.forEach((frame) => {
     const navigationItem = getNavigationItem(frame);
-    const href = resolveSiteHref(navigationItem.href);
-    const marker = document.createElement("a");
+    const marker = document.createElement("button");
     marker.className = "gallery-map-marker";
-    marker.href = href;
-    marker.setAttribute("aria-label", `${navigationItem.label} öffnen`);
+    marker.type = "button";
+    marker.setAttribute("aria-label", `Zu ${navigationItem.label} in der Galerie`);
     marker.style.left = `${roomXToPercent(frame.x)}%`;
     marker.style.top = `${roomZToPercent(frame.z)}%`;
+    marker.addEventListener("click", () => onSelectFrame(frame));
     const label = document.createElement("span");
     label.className = "sr-only";
     label.textContent = navigationItem.label;
     marker.appendChild(label);
     markerFragment.appendChild(marker);
 
-    const listLink = document.createElement("a");
+    const listLink = document.createElement("button");
     listLink.className = "gallery-map-list-link";
-    listLink.href = href;
+    listLink.type = "button";
     listLink.textContent = navigationItem.label;
+    listLink.addEventListener("click", () => onSelectFrame(frame));
     listFragment.appendChild(listLink);
   });
 
   mapTrack.appendChild(markerFragment);
   mapList.appendChild(listFragment);
+}
+
+function getPlayerViewForFrame(frame) {
+  const inset = 120;
+
+  if (frame.wall === "front") {
+    return { x: frame.x, z: ROOM.minZ + inset, rotation: Math.PI };
+  }
+
+  if (frame.wall === "back") {
+    return { x: frame.x, z: ROOM.maxZ - inset, rotation: 0 };
+  }
+
+  if (frame.wall === "left") {
+    return { x: ROOM.minX + inset, z: frame.z, rotation: Math.PI * 1.5 };
+  }
+
+  if (frame.wall === "right") {
+    return { x: ROOM.maxX - inset, z: frame.z, rotation: Math.PI * 0.5 };
+  }
+
+  return { x: 0, z: 0, rotation: 0 };
 }
 
 function updateMiniMapPlayer(player, mapPlayer) {

@@ -237,10 +237,12 @@ body.gate-locked .page-shell {
   position: absolute;
   width: 0.88rem;
   height: 0.88rem;
+  padding: 0;
   transform: translate(-50%, -50%);
   border-radius: 999px;
   border: 2px solid rgba(255, 252, 247, 0.84);
   background: #2b2219;
+  cursor: pointer;
   box-shadow: 0 5px 14px rgba(43, 34, 25, 0.22);
 }
 
@@ -254,6 +256,7 @@ body.gate-locked .page-shell {
 .gallery-map-list-link {
   min-width: 0;
   overflow: hidden;
+  cursor: pointer;
   border-radius: 999px;
   border: 1px solid rgba(43, 34, 25, 0.12);
   background: rgba(255, 252, 247, 0.48);
