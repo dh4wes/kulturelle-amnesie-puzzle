@@ -296,12 +296,12 @@ export function initGallery({ root, images = [] }) {
 function createGalleryMarkup() {
   return `
     <section class="gallery-viewport" data-gallery-viewport tabindex="0" aria-label="Begehbare Galerie">
-      <div class="gallery-map" data-gallery-map-panel data-collapsed="false">
+      <div class="gallery-map" data-gallery-map-panel data-collapsed="true">
         <button
           type="button"
           class="gallery-map-toggle"
           data-gallery-map-toggle
-          aria-expanded="true"
+          aria-expanded="false"
           aria-controls="gallery-map-content"
           aria-label="Galeriekarte ein- oder ausklappen"
         >
