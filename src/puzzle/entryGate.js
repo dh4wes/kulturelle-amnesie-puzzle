@@ -56,7 +56,6 @@ export async function initEntryGate(options = {}) {
     setupIntroOverlay(gate);
 
     const boardElement = gate.querySelector("[data-puzzle-board]");
-    const viewControl = gate.querySelector("[data-view-control]");
     const statusElement = gate.querySelector("[data-status]");
     const infoToggle = gate.querySelector("[data-info-toggle]");
     const infoOverlay = gate.querySelector("[data-info-overlay]");
@@ -179,50 +178,6 @@ export async function initEntryGate(options = {}) {
       infoToggle.focus();
     };
 
-    const setPuzzleViewingAngle = (clientX, clientY) => {
-      if (!viewControl) return;
-
-      const bounds = viewControl.getBoundingClientRect();
-      const x = (clientX - bounds.left) / bounds.width - 0.5;
-      const y = (clientY - bounds.top) / bounds.height - 0.5;
-      const rotateX = clampNumber(8 - y * 20, -10, 18);
-      const rotateY = clampNumber(-6 + x * 28, -20, 18);
-
-      viewControl.dataset.active = "true";
-      viewControl.setAttribute("aria-valuenow", x.toFixed(2));
-      boardElement.dataset.viewing = "true";
-      boardElement.style.setProperty("--puzzle-rotate-x", `${rotateX.toFixed(2)}deg`);
-      boardElement.style.setProperty("--puzzle-rotate-y", `${rotateY.toFixed(2)}deg`);
-    };
-
-    const resetPuzzleViewingAngle = () => {
-      viewControl.dataset.active = "false";
-      viewControl.setAttribute("aria-valuenow", "0");
-      boardElement.dataset.viewing = "false";
-      boardElement.style.removeProperty("--puzzle-rotate-x");
-      boardElement.style.removeProperty("--puzzle-rotate-y");
-    };
-
-    const startPuzzleViewDrag = (event) => {
-      if (solved || !viewControl) return;
-
-      event.preventDefault();
-      viewControl.setPointerCapture(event.pointerId);
-      setPuzzleViewingAngle(event.clientX, event.clientY);
-    };
-
-    const updatePuzzleViewDrag = (event) => {
-      if (viewControl?.dataset.active !== "true") return;
-      setPuzzleViewingAngle(event.clientX, event.clientY);
-    };
-
-    const endPuzzleViewDrag = (event) => {
-      if (viewControl?.hasPointerCapture(event.pointerId)) {
-        viewControl.releasePointerCapture(event.pointerId);
-      }
-      resetPuzzleViewingAngle();
-    };
-
     gate.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !infoOverlay.hidden) {
         closeInfoOverlay();
@@ -244,10 +199,6 @@ export async function initEntryGate(options = {}) {
       referenceFrame.hidden = !referenceToggle.checked;
     });
 
-    viewControl?.addEventListener("pointerdown", startPuzzleViewDrag);
-    viewControl?.addEventListener("pointermove", updatePuzzleViewDrag);
-    viewControl?.addEventListener("pointerup", endPuzzleViewDrag);
-    viewControl?.addEventListener("pointercancel", endPuzzleViewDrag);
     infoToggle.addEventListener("click", openInfoOverlay);
     infoClose.addEventListener("click", closeInfoOverlay);
     infoOverlay.addEventListener("click", (event) => {
@@ -280,10 +231,6 @@ export async function initEntryGate(options = {}) {
     unlockPageShell(pageShell);
     root.replaceChildren();
   }
-}
-
-function clampNumber(value, min, max) {
-  return Math.min(max, Math.max(min, value));
 }
 
 function setupIntroOverlay(gate) {
@@ -373,24 +320,16 @@ function createGateElement() {
       <div class="gate-intro-note gate-intro-note-start">
         <span>Schnellstart?</span>
         <svg viewBox="0 0 180 95" role="presentation" focusable="false">
-          <defs>
-            <marker id="intro-arrow-head-top" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" />
-            </marker>
-          </defs>
-          <path d="M 8 76 C 52 34, 108 24, 166 14" marker-end="url(#intro-arrow-head-top)" />
+          <path class="gate-intro-arrow-line" d="M 8 76 C 52 34, 108 24, 158 16" />
+          <path class="gate-intro-arrow-head" d="M 154 3 L 174 13 L 158 29" />
         </svg>
       </div>
 
       <div class="gate-intro-note gate-intro-note-menu">
         <span>Guck mal hier</span>
         <svg viewBox="0 0 190 125" role="presentation" focusable="false">
-          <defs>
-            <marker id="intro-arrow-head-bottom" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" />
-            </marker>
-          </defs>
-          <path d="M 12 18 C 64 42, 122 54, 170 106" marker-end="url(#intro-arrow-head-bottom)" />
+          <path class="gate-intro-arrow-line" d="M 12 18 C 64 42, 122 54, 166 101" />
+          <path class="gate-intro-arrow-head" d="M 146 99 L 174 111 L 166 82" />
         </svg>
       </div>
     </div>
@@ -413,24 +352,22 @@ function createGateElement() {
 
     <div class="entry-card">
       <div class="puzzle-area">
+        <div class="puzzle-symbol-field" aria-hidden="true">
+          <span>✦</span>
+          <span>◇</span>
+          <span>+</span>
+          <span>×</span>
+          <span>✧</span>
+          <span>□</span>
+          <span>•</span>
+          <span>△</span>
+        </div>
         <div
           class="puzzle-board"
           data-puzzle-board
           role="group"
           aria-describedby="entry-gate-status"
         ></div>
-        <div
-          class="puzzle-view-control"
-          data-view-control
-          role="slider"
-          aria-label="Puzzle-Blickwinkel ziehen"
-          aria-valuemin="-1"
-          aria-valuemax="1"
-          aria-valuenow="0"
-          tabindex="0"
-        >
-          <span></span>
-        </div>
         <p id="entry-gate-status" class="puzzle-status" data-status aria-live="polite"></p>
       </div>
 
