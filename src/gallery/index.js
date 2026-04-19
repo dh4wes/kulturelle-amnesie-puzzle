@@ -15,14 +15,16 @@ const ROOM = {
   minZ: -800,
   maxZ: 800,
 };
-const WALL_COLLISION_INSET = 115;
+const WALL_COLLISION_INSET = 58;
 const WALKABLE_ROOM = {
   minX: ROOM.minX + WALL_COLLISION_INSET,
   maxX: ROOM.maxX - WALL_COLLISION_INSET,
   minZ: ROOM.minZ + WALL_COLLISION_INSET,
   maxZ: ROOM.maxZ - WALL_COLLISION_INSET,
 };
-const WALL_CARD_TRIGGER_RANGE = 145;
+const WALL_CARD_TRIGGER_RANGE = 92;
+const FORWARD_TRIGGER_THRESHOLD = 0.45;
+const WALL_FACING_THRESHOLD = 0.72;
 
 const SCALE = 0.01;
 const ROOM_HEIGHT = 8.6;
@@ -181,6 +183,13 @@ export function initGallery({
     frameId = window.requestAnimationFrame(tick);
   };
 
+  const closeModalFromBackwardInput = () => {
+    if (modal.hidden || getForwardInput(input) > -FORWARD_TRIGGER_THRESHOLD) return false;
+    closeModal();
+    resetMovement();
+    return true;
+  };
+
   const setControl = (name, value) => {
     input[name] = value;
   };
@@ -287,12 +296,13 @@ export function initGallery({
       return;
     }
 
-    if (!modal.hidden) return;
-
     const control = keyMap[event.key];
     if (!control) return;
     event.preventDefault();
     setControl(control, true);
+    if (!modal.hidden) {
+      closeModalFromBackwardInput();
+    }
   };
 
   const handleKeyUp = (event) => {
@@ -331,6 +341,7 @@ export function initGallery({
     input.turnAxis = -normalizedX;
     input.moveAxisY = -normalizedY;
     input.moveAxisX = 0;
+    closeModalFromBackwardInput();
   };
 
   joystick.addEventListener("pointerdown", (event) => {
@@ -551,36 +562,37 @@ function getPlayerViewForFrame(frame) {
 }
 
 function getBoundaryFrameTrigger(player, input, frames) {
-  if (!hasMovementInput(input)) return null;
+  if (getForwardInput(input) < FORWARD_TRIGGER_THRESHOLD) return null;
+  const facing = getFacingVector(player.rotation);
 
-  if (player.z <= WALKABLE_ROOM.minZ) {
+  if (player.z <= WALKABLE_ROOM.minZ && facing.z < -WALL_FACING_THRESHOLD) {
     return getNearestFrameOnWall(frames, "front", player.x);
   }
 
-  if (player.z >= WALKABLE_ROOM.maxZ) {
+  if (player.z >= WALKABLE_ROOM.maxZ && facing.z > WALL_FACING_THRESHOLD) {
     return getNearestFrameOnWall(frames, "back", player.x);
   }
 
-  if (player.x <= WALKABLE_ROOM.minX) {
+  if (player.x <= WALKABLE_ROOM.minX && facing.x < -WALL_FACING_THRESHOLD) {
     return getNearestFrameOnWall(frames, "left", player.z);
   }
 
-  if (player.x >= WALKABLE_ROOM.maxX) {
+  if (player.x >= WALKABLE_ROOM.maxX && facing.x > WALL_FACING_THRESHOLD) {
     return getNearestFrameOnWall(frames, "right", player.z);
   }
 
   return null;
 }
 
-function hasMovementInput(input) {
-  return Boolean(
-    input.forward ||
-      input.backward ||
-      input.left ||
-      input.right ||
-      Math.abs(input.moveAxisX) > 0.05 ||
-      Math.abs(input.moveAxisY) > 0.05,
-  );
+function getForwardInput(input) {
+  return ("moveAxisY" in input ? input.moveAxisY : 0) + (input.forward ? 1 : 0) - (input.backward ? 1 : 0);
+}
+
+function getFacingVector(rotation) {
+  return {
+    x: Math.sin(rotation),
+    z: Math.cos(rotation),
+  };
 }
 
 function getNearestFrameOnWall(frames, wall, axisValue) {
