@@ -18,6 +18,7 @@ const HALF_DEPTH = (ROOM.maxZ - ROOM.minZ) * SCALE * 0.5;
 const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
 const AR_MODEL_SRC = "/models/Splat_Test_textured_mesh_glb.glb";
 const AR_MODEL_SOURCE_SRC = "/models/Splat_Test_textured_mesh_obj.zip";
+const MINIMAP_MARKER_INSET_PERCENT = 8;
 const NAVIGATION_ITEMS = [
   { label: "Horch mal", href: "/featured", icon: "/icons/menu-1.png" },
   { label: "Texte/Gedichte", href: "/works", icon: "/icons/menu-2.png" },
@@ -448,8 +449,8 @@ function buildMiniMapMarkers(frames, mapTrack, mapList, onSelectFrame) {
     marker.className = "gallery-map-marker";
     marker.type = "button";
     marker.setAttribute("aria-label", `Zu ${navigationItem.label} in der Galerie`);
-    marker.style.left = `${roomXToPercent(frame.x)}%`;
-    marker.style.top = `${roomZToPercent(frame.z)}%`;
+    marker.style.left = `${roomXToMarkerPercent(frame.x)}%`;
+    marker.style.top = `${roomZToMarkerPercent(frame.z)}%`;
     marker.addEventListener("click", () => onSelectFrame(frame));
     const markerIcon = document.createElement("img");
     markerIcon.src = navigationItem.icon;
@@ -516,6 +517,18 @@ function roomXToPercent(x) {
 function roomZToPercent(z) {
   const clampedZ = Math.min(Math.max(z, ROOM.minZ), ROOM.maxZ);
   return ((clampedZ - ROOM.minZ) / (ROOM.maxZ - ROOM.minZ)) * 100;
+}
+
+function insetPercent(percent, inset = MINIMAP_MARKER_INSET_PERCENT) {
+  return inset + (percent / 100) * (100 - inset * 2);
+}
+
+function roomXToMarkerPercent(x) {
+  return insetPercent(roomXToPercent(x));
+}
+
+function roomZToMarkerPercent(z) {
+  return insetPercent(roomZToPercent(z));
 }
 
 function buildMuseum(scene, frames, interactables, wallpaper) {
