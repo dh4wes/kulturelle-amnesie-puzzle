@@ -1196,7 +1196,7 @@ body.gate-locked .page-shell {
   }
 
   .gallery-joystick-wrap {
-    bottom: 0.8rem;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 2.4rem);
   }
 
   .gallery-joystick {

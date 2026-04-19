@@ -274,24 +274,28 @@ function setupIntroOverlay(gate) {
   }
 
   const positionOverlay = () => {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    const visualViewport = window.visualViewport;
+    const viewportWidth = visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = visualViewport?.height ?? window.innerHeight;
+    const viewportOffsetLeft = visualViewport?.offsetLeft ?? 0;
+    const viewportOffsetTop = visualViewport?.offsetTop ?? 0;
     arrows.setAttribute("viewBox", `0 0 ${viewportWidth} ${viewportHeight}`);
 
     const startTargetRect = startTarget.getBoundingClientRect();
     const menuTargetRect = menuTarget.getBoundingClientRect();
-    const startTargetPoint = getRectCenter(startTargetRect);
-    const menuTargetPoint = getRectCenter(menuTargetRect);
+    const startTargetPoint = getRectCenter(startTargetRect, viewportOffsetLeft, viewportOffsetTop);
+    const menuTargetPoint = getRectCenter(menuTargetRect, viewportOffsetLeft, viewportOffsetTop);
+    const isMobile = viewportWidth < 520;
 
     positionLabel(startLabel, {
-      x: startTargetPoint.x - (viewportWidth < 520 ? 250 : 350),
-      y: startTargetPoint.y + (viewportWidth < 520 ? 34 : 42),
+      x: startTargetPoint.x - (isMobile ? 232 : 350),
+      y: startTargetPoint.y + (isMobile ? 30 : 42),
       viewportWidth,
       viewportHeight,
     });
     positionLabel(menuLabel, {
-      x: menuTargetPoint.x - (viewportWidth < 520 ? 210 : 300),
-      y: menuTargetPoint.y - (viewportWidth < 520 ? 128 : 140),
+      x: menuTargetPoint.x - (isMobile ? 198 : 300),
+      y: menuTargetPoint.y - (isMobile ? 114 : 140),
       viewportWidth,
       viewportHeight,
     });
@@ -318,36 +322,46 @@ function setupIntroOverlay(gate) {
   };
 
   const removeOverlay = () => overlay.remove();
-  window.requestAnimationFrame(positionOverlay);
-  window.addEventListener("resize", positionOverlay);
+  const schedulePositionOverlay = () => window.requestAnimationFrame(positionOverlay);
+  schedulePositionOverlay();
+  window.setTimeout(schedulePositionOverlay, 120);
+  window.setTimeout(schedulePositionOverlay, 420);
+  window.addEventListener("resize", schedulePositionOverlay);
+  window.visualViewport?.addEventListener("resize", schedulePositionOverlay);
+  window.visualViewport?.addEventListener("scroll", schedulePositionOverlay);
   window.setTimeout(() => {
     overlay.classList.add("is-fading");
     overlay.addEventListener(
       "transitionend",
       () => {
-        window.removeEventListener("resize", positionOverlay);
+        window.removeEventListener("resize", schedulePositionOverlay);
+        window.visualViewport?.removeEventListener("resize", schedulePositionOverlay);
+        window.visualViewport?.removeEventListener("scroll", schedulePositionOverlay);
         removeOverlay();
       },
       { once: true },
     );
     window.setTimeout(() => {
-      window.removeEventListener("resize", positionOverlay);
+      window.removeEventListener("resize", schedulePositionOverlay);
+      window.visualViewport?.removeEventListener("resize", schedulePositionOverlay);
+      window.visualViewport?.removeEventListener("scroll", schedulePositionOverlay);
       removeOverlay();
     }, 700);
   }, INTRO_OVERLAY_MS);
 }
 
-function getRectCenter(rect) {
+function getRectCenter(rect, viewportOffsetLeft = 0, viewportOffsetTop = 0) {
   return {
-    x: rect.left + rect.width * 0.5,
-    y: rect.top + rect.height * 0.5,
+    x: rect.left - viewportOffsetLeft + rect.width * 0.5,
+    y: rect.top - viewportOffsetTop + rect.height * 0.5,
   };
 }
 
 function positionLabel(label, { x, y, viewportWidth, viewportHeight }) {
   const maxWidth = Math.min(viewportWidth - 24, viewportWidth < 520 ? 260 : 360);
   label.style.maxWidth = `${maxWidth}px`;
-  label.style.left = `${Math.min(Math.max(x, 12), viewportWidth - maxWidth - 12)}px`;
+  const labelWidth = Math.min(label.getBoundingClientRect().width || maxWidth, maxWidth);
+  label.style.left = `${Math.min(Math.max(x, 12), viewportWidth - labelWidth - 12)}px`;
   label.style.top = `${Math.min(Math.max(y, 74), viewportHeight - 168)}px`;
 }
 
