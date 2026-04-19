@@ -589,7 +589,7 @@ body.gate-locked .page-shell {
   position: absolute;
   top: 1.2rem;
   right: 1.2rem;
-  z-index: 1;
+  z-index: 3;
   width: 2.5rem;
   height: 2.5rem;
   display: grid;
@@ -599,7 +599,12 @@ body.gate-locked .page-shell {
   background: rgba(25, 19, 23, 0.74);
   color: #fff5ad;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.24),
+    0 0 24px rgba(255, 245, 173, 0.32);
+  animation:
+    gateStarEnter 900ms cubic-bezier(0.2, 0.86, 0.24, 1.08) 620ms both,
+    activeControlGlow 2.4s ease-in-out 1.6s infinite;
 }
 
 .gate-title {
@@ -618,65 +623,6 @@ body.gate-locked .page-shell {
 
 .bypass-star:hover {
   background: rgba(48, 34, 40, 0.88);
-}
-
-.gate-intro-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  color: #c50000;
-  opacity: 1;
-  transition: opacity 620ms ease;
-}
-
-.gate-intro-overlay.is-fading {
-  opacity: 0;
-}
-
-.gate-intro-note {
-  position: absolute;
-  z-index: 1;
-  color: #c50000;
-  font-family: "Bradley Hand", "Marker Felt", "Comic Sans MS", cursive;
-  font-size: clamp(2.1rem, 7vw, 4.2rem);
-  font-weight: 700;
-  line-height: 0.9;
-  letter-spacing: 0;
-  text-shadow:
-    0 1px 0 rgba(70, 0, 0, 0.22),
-    0 8px 24px rgba(0, 0, 0, 0.2);
-  white-space: nowrap;
-}
-
-.gate-intro-note-start {
-  transform: rotate(-7deg);
-}
-
-.gate-intro-note-menu {
-  transform: rotate(5deg);
-}
-
-.gate-intro-arrows {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: visible;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.gate-intro-arrow-line {
-  fill: none;
-}
-
-.gate-intro-arrow-head {
-  fill: none;
-  stroke-width: 8.5;
 }
 
 .bypass-dialog {
@@ -731,6 +677,27 @@ body.gate-locked .page-shell {
   justify-items: center;
 }
 
+.puzzle-intro-image {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: puzzleIntroLayer 2.35s cubic-bezier(0.22, 0.82, 0.24, 1) forwards;
+}
+
+.puzzle-intro-image img {
+  width: min(72vw, 68vh, 600px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 1rem;
+  box-shadow:
+    0 42px 100px rgba(0, 0, 0, 0.36),
+    0 0 0 1px rgba(255, 245, 173, 0.14);
+  animation: puzzleImageToTiles 2.35s cubic-bezier(0.22, 0.82, 0.24, 1) forwards;
+}
+
 .puzzle-area::before {
   content: "";
   position: absolute;
@@ -760,6 +727,8 @@ body.gate-locked .page-shell {
   gap: 0.32rem;
   touch-action: manipulation;
   z-index: 2;
+  opacity: 0;
+  animation: puzzleBoardReveal 900ms ease 1.38s forwards;
 }
 
 .puzzle-board::after {
@@ -860,7 +829,7 @@ body.gate-locked .page-shell {
   position: absolute;
   right: 1rem;
   bottom: 1rem;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   width: 4.8rem;
   height: 2.6rem;
@@ -875,6 +844,9 @@ body.gate-locked .page-shell {
     0 12px 28px rgba(0, 0, 0, 0.28),
     0 0 28px rgba(255, 245, 173, 0.16);
   cursor: pointer;
+  animation:
+    gateWaveEnter 900ms cubic-bezier(0.2, 0.86, 0.24, 1.08) 820ms both,
+    activeControlGlow 2.4s ease-in-out 1.75s infinite;
 }
 
 .gate-info-wave span {
@@ -899,6 +871,97 @@ body.gate-locked .page-shell {
     0 0 0 1px rgba(255, 245, 173, 0.12),
     0 14px 30px rgba(0, 0, 0, 0.32),
     0 0 34px rgba(255, 245, 173, 0.24);
+}
+
+@keyframes puzzleIntroLayer {
+  0%,
+  72% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes puzzleImageToTiles {
+  0% {
+    opacity: 1;
+    transform: scale(1.18);
+    filter: saturate(1.08) brightness(1.06);
+  }
+
+  44% {
+    opacity: 1;
+    transform: scale(1);
+    filter: saturate(1.02) brightness(1.02);
+  }
+
+  72% {
+    opacity: 0.62;
+    transform: scale(1);
+    filter: saturate(0.94) brightness(0.92);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.985);
+    filter: saturate(0.9) brightness(0.86);
+  }
+}
+
+@keyframes puzzleBoardReveal {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes gateStarEnter {
+  from {
+    opacity: 0;
+    transform: translate(3.2rem, -2rem) scale(0.72);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes gateWaveEnter {
+  from {
+    opacity: 0;
+    transform: translate(3.4rem, 2.4rem) scale(0.78);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes activeControlGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 245, 173, 0.08),
+      0 12px 28px rgba(0, 0, 0, 0.28),
+      0 0 22px rgba(255, 245, 173, 0.18);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 245, 173, 0.2),
+      0 14px 32px rgba(0, 0, 0, 0.3),
+      0 0 38px rgba(255, 245, 173, 0.36);
+  }
 }
 
 @keyframes gateInfoWave {
@@ -1070,10 +1133,6 @@ body.gate-locked .page-shell {
     padding: 0.75rem;
   }
 
-  .gate-intro-note {
-    font-size: clamp(2rem, 13vw, 3.35rem);
-  }
-
   .entry-card {
     padding: 0.9rem;
     min-height: min(620px, calc(100vh - 1.5rem));
@@ -1083,6 +1142,11 @@ body.gate-locked .page-shell {
     width: min(88vw, 52vh);
     gap: 0.24rem;
     padding: 0.32rem;
+    border-radius: 0.85rem;
+  }
+
+  .puzzle-intro-image img {
+    width: min(88vw, 52vh);
     border-radius: 0.85rem;
   }
 
@@ -1178,6 +1242,22 @@ body.gate-locked .page-shell {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .bypass-star,
+  .gate-info-wave,
+  .puzzle-board,
+  .puzzle-intro-image,
+  .puzzle-intro-image img {
+    animation: none;
+  }
+
+  .puzzle-board {
+    opacity: 1;
+  }
+
+  .puzzle-intro-image {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {

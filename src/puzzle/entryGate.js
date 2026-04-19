@@ -14,7 +14,6 @@ import {
 } from "./logic.js";
 
 const SESSION_FLAG = "__kulturelle_amnesie_gate_open__";
-const INTRO_OVERLAY_MS = 7000;
 const MOBILE_MEDIA = "(max-width: 479px)";
 const SOLVED_HOLD_MS = 1200;
 const BYPASS_HOLD_MS = 150;
@@ -52,9 +51,9 @@ export async function initEntryGate(options = {}) {
     const { sourceUrl, croppedUrl } = await pickAndPrepareImage(images);
     const gate = createGateElement();
     root.replaceChildren(gate);
-    setupIntroOverlay(gate);
 
     const boardElement = gate.querySelector("[data-puzzle-board]");
+    const introImage = gate.querySelector("[data-intro-image]");
     const statusElement = gate.querySelector("[data-status]");
     const infoToggle = gate.querySelector("[data-info-toggle]");
     const infoOverlay = gate.querySelector("[data-info-overlay]");
@@ -71,6 +70,10 @@ export async function initEntryGate(options = {}) {
     let board = shuffleBoard(size);
     let solved = false;
 
+    if (introImage) {
+      introImage.src = croppedUrl;
+      introImage.alt = "";
+    }
     referenceImage.src = croppedUrl;
     referenceImage.alt = "Referenzansicht des gewählten Puzzlebildes";
 
@@ -245,143 +248,6 @@ export async function initEntryGate(options = {}) {
   }
 }
 
-function setupIntroOverlay(gate) {
-  const overlay = gate.querySelector("[data-intro-overlay]");
-  const startLabel = overlay?.querySelector("[data-intro-start-label]");
-  const menuLabel = overlay?.querySelector("[data-intro-menu-label]");
-  const arrows = overlay?.querySelector("[data-intro-arrows]");
-  const startLine = overlay?.querySelector("[data-intro-start-line]");
-  const startHead = overlay?.querySelector("[data-intro-start-head]");
-  const menuLine = overlay?.querySelector("[data-intro-menu-line]");
-  const menuHead = overlay?.querySelector("[data-intro-menu-head]");
-  const startTarget = gate.querySelector("[data-bypass-star]");
-  const menuTarget = gate.querySelector("[data-info-toggle]");
-
-  if (
-    !overlay ||
-    !startLabel ||
-    !menuLabel ||
-    !arrows ||
-    !startLine ||
-    !startHead ||
-    !menuLine ||
-    !menuHead ||
-    !startTarget ||
-    !menuTarget
-  ) {
-    return;
-  }
-
-  const positionOverlay = () => {
-    const visualViewport = window.visualViewport;
-    const viewportWidth = visualViewport?.width ?? window.innerWidth;
-    const viewportHeight = visualViewport?.height ?? window.innerHeight;
-    const viewportOffsetLeft = visualViewport?.offsetLeft ?? 0;
-    const viewportOffsetTop = visualViewport?.offsetTop ?? 0;
-    arrows.setAttribute("viewBox", `0 0 ${viewportWidth} ${viewportHeight}`);
-
-    const startTargetRect = startTarget.getBoundingClientRect();
-    const menuTargetRect = menuTarget.getBoundingClientRect();
-    const startTargetPoint = getRectCenter(startTargetRect, viewportOffsetLeft, viewportOffsetTop);
-    const menuTargetPoint = getRectCenter(menuTargetRect, viewportOffsetLeft, viewportOffsetTop);
-    const isMobile = viewportWidth < 520;
-
-    positionLabel(startLabel, {
-      x: startTargetPoint.x - (isMobile ? 232 : 350),
-      y: startTargetPoint.y + (isMobile ? 30 : 42),
-      viewportWidth,
-      viewportHeight,
-    });
-    positionLabel(menuLabel, {
-      x: menuTargetPoint.x - (isMobile ? 198 : 300),
-      y: menuTargetPoint.y - (isMobile ? 114 : 140),
-      viewportWidth,
-      viewportHeight,
-    });
-
-    const startLabelRect = startLabel.getBoundingClientRect();
-    const menuLabelRect = menuLabel.getBoundingClientRect();
-    const startAnchor = {
-      x: startLabelRect.right - 12,
-      y: startLabelRect.top + startLabelRect.height * 0.42,
-    };
-    const menuAnchor = {
-      x: menuLabelRect.right - 8,
-      y: menuLabelRect.bottom + 8,
-    };
-
-    drawArrow(startLine, startHead, startAnchor, startTargetPoint, {
-      x: (startAnchor.x + startTargetPoint.x) * 0.5,
-      y: startTargetPoint.y + 34,
-    });
-    drawArrow(menuLine, menuHead, menuAnchor, menuTargetPoint, {
-      x: (menuAnchor.x + menuTargetPoint.x) * 0.55,
-      y: menuTargetPoint.y - 34,
-    });
-  };
-
-  const removeOverlay = () => overlay.remove();
-  const schedulePositionOverlay = () => window.requestAnimationFrame(positionOverlay);
-  schedulePositionOverlay();
-  window.setTimeout(schedulePositionOverlay, 120);
-  window.setTimeout(schedulePositionOverlay, 420);
-  window.addEventListener("resize", schedulePositionOverlay);
-  window.visualViewport?.addEventListener("resize", schedulePositionOverlay);
-  window.visualViewport?.addEventListener("scroll", schedulePositionOverlay);
-  window.setTimeout(() => {
-    overlay.classList.add("is-fading");
-    overlay.addEventListener(
-      "transitionend",
-      () => {
-        window.removeEventListener("resize", schedulePositionOverlay);
-        window.visualViewport?.removeEventListener("resize", schedulePositionOverlay);
-        window.visualViewport?.removeEventListener("scroll", schedulePositionOverlay);
-        removeOverlay();
-      },
-      { once: true },
-    );
-    window.setTimeout(() => {
-      window.removeEventListener("resize", schedulePositionOverlay);
-      window.visualViewport?.removeEventListener("resize", schedulePositionOverlay);
-      window.visualViewport?.removeEventListener("scroll", schedulePositionOverlay);
-      removeOverlay();
-    }, 700);
-  }, INTRO_OVERLAY_MS);
-}
-
-function getRectCenter(rect, viewportOffsetLeft = 0, viewportOffsetTop = 0) {
-  return {
-    x: rect.left - viewportOffsetLeft + rect.width * 0.5,
-    y: rect.top - viewportOffsetTop + rect.height * 0.5,
-  };
-}
-
-function positionLabel(label, { x, y, viewportWidth, viewportHeight }) {
-  const maxWidth = Math.min(viewportWidth - 24, viewportWidth < 520 ? 260 : 360);
-  label.style.maxWidth = `${maxWidth}px`;
-  const labelWidth = Math.min(label.getBoundingClientRect().width || maxWidth, maxWidth);
-  label.style.left = `${Math.min(Math.max(x, 12), viewportWidth - labelWidth - 12)}px`;
-  label.style.top = `${Math.min(Math.max(y, 74), viewportHeight - 168)}px`;
-}
-
-function drawArrow(line, head, from, to, control) {
-  line.setAttribute("d", `M ${from.x} ${from.y} Q ${control.x} ${control.y} ${to.x} ${to.y}`);
-
-  const angle = Math.atan2(to.y - control.y, to.x - control.x);
-  const length = 24;
-  const spread = 0.72;
-  const left = {
-    x: to.x - Math.cos(angle - spread) * length,
-    y: to.y - Math.sin(angle - spread) * length,
-  };
-  const right = {
-    x: to.x - Math.cos(angle + spread) * length,
-    y: to.y - Math.sin(angle + spread) * length,
-  };
-
-  head.setAttribute("d", `M ${left.x} ${left.y} L ${to.x} ${to.y} L ${right.x} ${right.y}`);
-}
-
 async function pickAndPrepareImage(images) {
   const remaining = [...images];
 
@@ -429,17 +295,6 @@ function createGateElement() {
   gate.innerHTML = `
     <h1 class="gate-title">Nicole Grundhöfer</h1>
 
-    <div class="gate-intro-overlay" data-intro-overlay aria-hidden="true">
-      <svg class="gate-intro-arrows" data-intro-arrows role="presentation" focusable="false">
-        <path class="gate-intro-arrow-line" data-intro-start-line />
-        <path class="gate-intro-arrow-head" data-intro-start-head />
-        <path class="gate-intro-arrow-line" data-intro-menu-line />
-        <path class="gate-intro-arrow-head" data-intro-menu-head />
-      </svg>
-      <div class="gate-intro-note gate-intro-note-start" data-intro-start-label>Schnellstart?</div>
-      <div class="gate-intro-note gate-intro-note-menu" data-intro-menu-label>Guck mal hier</div>
-    </div>
-
     <button
       type="button"
       class="bypass-star"
@@ -458,6 +313,9 @@ function createGateElement() {
 
     <div class="entry-card">
       <div class="puzzle-area">
+        <div class="puzzle-intro-image" aria-hidden="true">
+          <img data-intro-image alt="" />
+        </div>
         <div
           class="puzzle-board"
           data-puzzle-board
