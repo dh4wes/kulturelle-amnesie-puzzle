@@ -146,6 +146,7 @@ export function initGallery({
     type: wallpaper,
     color: wallpaperColor,
     images: wallpaperImages,
+    frame,
   });
   syncCamera(camera, player);
   renderFrame();
@@ -624,7 +625,7 @@ function buildMuseum(scene, frames, interactables, wallpaper) {
 
   addTrim(scene, width, depth);
   addGlobeSculpture(scene, interactables);
-  addPaintings(scene, frames, interactables, frame);
+  addPaintings(scene, frames, interactables, wallpaper?.frame);
 }
 
 function createWall(width, height, position, rotation, material) {
