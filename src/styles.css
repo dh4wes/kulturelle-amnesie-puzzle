@@ -195,8 +195,9 @@ body.gate-locked .page-shell {
 .gallery-map-content {
   display: grid;
   grid-template-rows: 1fr;
-  max-height: 22rem;
-  overflow: hidden;
+  max-height: min(32rem, calc(100vh - 7rem));
+  overflow-x: hidden;
+  overflow-y: auto;
   transition:
     grid-template-rows 180ms ease,
     max-height 180ms ease,
@@ -265,6 +266,7 @@ body.gate-locked .page-shell {
 .gallery-map-list-link {
   display: flex;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   align-items: center;
   justify-content: flex-start;
@@ -931,6 +933,10 @@ body.gate-locked .page-shell {
     border-radius: 0.85rem;
   }
 
+  .gallery-map-content {
+    max-height: calc(100vh - 5rem);
+  }
+
   .gallery-map-toggle {
     min-height: 2.15rem;
     font-size: 0.62rem;
@@ -958,6 +964,11 @@ body.gate-locked .page-shell {
   .gallery-map-list-link {
     font-size: 0.58rem;
     padding: 0.28rem 0.38rem;
+  }
+
+  .gallery-map-list-link img {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
   .gallery-map-marker span {

@@ -21,9 +21,10 @@ const NAVIGATION_ITEMS = [
   { label: "Texte/Gedichte", href: "/works", icon: "/icons/menu-2.png" },
   { label: "Projekte", href: "/archive", icon: "/icons/menu-3.png" },
   { label: "Nachrichten", href: "/guestbook", icon: "/icons/menu-4.png" },
+  { label: "begehbare Ausstellung", href: "https://kulturelle-amnesie-puzzle.vercel.app/", icon: "/icons/menu-5.png" },
   { label: "Kontakt", href: "/kontakt", icon: "/icons/menu-6.png" },
-  { label: "Fragen; des Monats? des Tages?", href: "/fragen", icon: "/icons/menu-8.png" },
   { label: "Lebenslauf", href: "/lebenslauf", icon: "/icons/menu-7.png" },
+  { label: "Fragen; des Monats? des Tages?", href: "/fragen", icon: "/icons/menu-8.png" },
   { label: "Tattoo", href: "/tattoo", icon: "/icons/menu-9.png" },
 ];
 const MENU_ICON_PATHS = Array.from({ length: 9 }, (_, index) => `/icons/menu-${index + 1}.png`);
@@ -35,7 +36,7 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     };
   }
 
-  const frames = createGalleryFrames(images);
+  const frames = createGalleryFrames(getGalleryFrameImages(images));
   root.innerHTML = createGalleryMarkup();
 
   const viewport = root.querySelector("[data-gallery-viewport]");
@@ -354,7 +355,19 @@ function getNavigationItem(frame) {
 }
 
 function resolveSiteHref(path) {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
   return resolveSiteGalleryHandoff(path);
+}
+
+function getGalleryFrameImages(images) {
+  if (!images.length) {
+    return [];
+  }
+
+  return NAVIGATION_ITEMS.map((_, index) => images[index % images.length]);
 }
 
 function resolveSiteGalleryHandoff(path) {
@@ -732,28 +745,37 @@ function hydrateIconWallpaper(context, canvas, texture) {
 }
 
 function drawWallpaperIconGrid(context, canvas, image, index) {
-  const columns = 4;
-  const rows = 4;
-  const cellWidth = canvas.width / columns;
-  const cellHeight = canvas.height / rows;
-  const iconSize = 46;
-  const rowOffset = Math.floor(index / columns) * 56;
-  const colOffset = (index % columns) * 54;
+  const placements = [
+    { x: 74, y: 96, size: 42, rotation: -0.16, alpha: 0.2 },
+    { x: 286, y: 58, size: 34, rotation: 0.1, alpha: 0.16 },
+    { x: 516, y: 128, size: 48, rotation: -0.05, alpha: 0.22 },
+    { x: 812, y: 78, size: 38, rotation: 0.18, alpha: 0.18 },
+    { x: 164, y: 302, size: 52, rotation: 0.08, alpha: 0.22 },
+    { x: 410, y: 248, size: 36, rotation: -0.22, alpha: 0.17 },
+    { x: 696, y: 336, size: 44, rotation: 0.13, alpha: 0.2 },
+    { x: 922, y: 268, size: 32, rotation: -0.1, alpha: 0.15 },
+    { x: 82, y: 560, size: 36, rotation: 0.22, alpha: 0.17 },
+    { x: 338, y: 502, size: 46, rotation: -0.12, alpha: 0.21 },
+    { x: 604, y: 610, size: 40, rotation: 0.04, alpha: 0.18 },
+    { x: 864, y: 552, size: 54, rotation: -0.18, alpha: 0.23 },
+    { x: 206, y: 804, size: 40, rotation: 0.12, alpha: 0.19 },
+    { x: 472, y: 744, size: 54, rotation: -0.02, alpha: 0.22 },
+    { x: 746, y: 858, size: 36, rotation: 0.2, alpha: 0.16 },
+    { x: 958, y: 774, size: 44, rotation: -0.09, alpha: 0.2 },
+  ];
 
   context.save();
-  context.globalAlpha = 0.24;
 
-  for (let y = -cellHeight; y < canvas.height + cellHeight; y += cellHeight) {
-    for (let x = -cellWidth; x < canvas.width + cellWidth; x += cellWidth) {
-      const drawX = x + 54 + colOffset;
-      const drawY = y + 48 + rowOffset;
+  placements
+    .filter((_, placementIndex) => placementIndex % MENU_ICON_PATHS.length === index)
+    .forEach((placement) => {
       context.save();
-      context.translate(drawX + iconSize / 2, drawY + iconSize / 2);
-      context.rotate(((index % 3) - 1) * 0.08);
-      context.drawImage(image, -iconSize / 2, -iconSize / 2, iconSize, iconSize);
+      context.globalAlpha = placement.alpha;
+      context.translate(placement.x, placement.y);
+      context.rotate(placement.rotation);
+      context.drawImage(image, -placement.size / 2, -placement.size / 2, placement.size, placement.size);
       context.restore();
-    }
-  }
+    });
 
   context.restore();
 }
