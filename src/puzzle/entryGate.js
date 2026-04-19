@@ -14,6 +14,8 @@ import {
 } from "./logic.js";
 
 const SESSION_FLAG = "__kulturelle_amnesie_gate_open__";
+const INTRO_OVERLAY_STORAGE_KEY = "__kulturelle_amnesie_intro_overlay_seen__";
+const INTRO_OVERLAY_MS = 7000;
 const MOBILE_MEDIA = "(max-width: 479px)";
 const SOLVED_HOLD_MS = 5000;
 const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
@@ -50,9 +52,10 @@ export async function initEntryGate(options = {}) {
     const { sourceUrl, croppedUrl } = await pickAndPrepareImage(images);
     const gate = createGateElement();
     root.replaceChildren(gate);
+    setupIntroOverlay(gate);
 
-    const puzzleArea = gate.querySelector("[data-puzzle-area]");
     const boardElement = gate.querySelector("[data-puzzle-board]");
+    const viewControl = gate.querySelector("[data-view-control]");
     const statusElement = gate.querySelector("[data-status]");
     const infoToggle = gate.querySelector("[data-info-toggle]");
     const infoOverlay = gate.querySelector("[data-info-overlay]");
@@ -174,24 +177,48 @@ export async function initEntryGate(options = {}) {
       infoToggle.focus();
     };
 
-    const updatePuzzleViewingAngle = (event) => {
-      if (solved || !puzzleArea) return;
+    const setPuzzleViewingAngle = (clientX, clientY) => {
+      if (!viewControl) return;
 
-      const bounds = puzzleArea.getBoundingClientRect();
-      const x = (event.clientX - bounds.left) / bounds.width - 0.5;
-      const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-      const rotateX = clampNumber(8 - y * 18, -8, 18);
-      const rotateY = clampNumber(-6 + x * 22, -18, 14);
+      const bounds = viewControl.getBoundingClientRect();
+      const x = (clientX - bounds.left) / bounds.width - 0.5;
+      const y = (clientY - bounds.top) / bounds.height - 0.5;
+      const rotateX = clampNumber(8 - y * 20, -10, 18);
+      const rotateY = clampNumber(-6 + x * 28, -20, 18);
 
+      viewControl.dataset.active = "true";
+      viewControl.setAttribute("aria-valuenow", x.toFixed(2));
       boardElement.dataset.viewing = "true";
       boardElement.style.setProperty("--puzzle-rotate-x", `${rotateX.toFixed(2)}deg`);
       boardElement.style.setProperty("--puzzle-rotate-y", `${rotateY.toFixed(2)}deg`);
     };
 
     const resetPuzzleViewingAngle = () => {
+      viewControl.dataset.active = "false";
+      viewControl.setAttribute("aria-valuenow", "0");
       boardElement.dataset.viewing = "false";
       boardElement.style.removeProperty("--puzzle-rotate-x");
       boardElement.style.removeProperty("--puzzle-rotate-y");
+    };
+
+    const startPuzzleViewDrag = (event) => {
+      if (solved || !viewControl) return;
+
+      event.preventDefault();
+      viewControl.setPointerCapture(event.pointerId);
+      setPuzzleViewingAngle(event.clientX, event.clientY);
+    };
+
+    const updatePuzzleViewDrag = (event) => {
+      if (viewControl?.dataset.active !== "true") return;
+      setPuzzleViewingAngle(event.clientX, event.clientY);
+    };
+
+    const endPuzzleViewDrag = (event) => {
+      if (viewControl?.hasPointerCapture(event.pointerId)) {
+        viewControl.releasePointerCapture(event.pointerId);
+      }
+      resetPuzzleViewingAngle();
     };
 
     gate.addEventListener("keydown", (event) => {
@@ -215,9 +242,10 @@ export async function initEntryGate(options = {}) {
       referenceFrame.hidden = !referenceToggle.checked;
     });
 
-    puzzleArea?.addEventListener("pointermove", updatePuzzleViewingAngle);
-    puzzleArea?.addEventListener("pointerleave", resetPuzzleViewingAngle);
-    puzzleArea?.addEventListener("pointercancel", resetPuzzleViewingAngle);
+    viewControl?.addEventListener("pointerdown", startPuzzleViewDrag);
+    viewControl?.addEventListener("pointermove", updatePuzzleViewDrag);
+    viewControl?.addEventListener("pointerup", endPuzzleViewDrag);
+    viewControl?.addEventListener("pointercancel", endPuzzleViewDrag);
     infoToggle.addEventListener("click", openInfoOverlay);
     infoClose.addEventListener("click", closeInfoOverlay);
     infoOverlay.addEventListener("click", (event) => {
@@ -254,6 +282,42 @@ export async function initEntryGate(options = {}) {
 
 function clampNumber(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function setupIntroOverlay(gate) {
+  const overlay = gate.querySelector("[data-intro-overlay]");
+
+  if (!overlay) return;
+
+  if (hasSeenIntroOverlay()) {
+    overlay.remove();
+    return;
+  }
+
+  markIntroOverlaySeen();
+
+  const removeOverlay = () => overlay.remove();
+  window.setTimeout(() => {
+    overlay.classList.add("is-fading");
+    overlay.addEventListener("transitionend", removeOverlay, { once: true });
+    window.setTimeout(removeOverlay, 700);
+  }, INTRO_OVERLAY_MS);
+}
+
+function hasSeenIntroOverlay() {
+  try {
+    return window.localStorage.getItem(INTRO_OVERLAY_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function markIntroOverlaySeen() {
+  try {
+    window.localStorage.setItem(INTRO_OVERLAY_STORAGE_KEY, "true");
+  } catch {
+    // Storage may be disabled; the overlay can still fade normally for this visit.
+  }
 }
 
 async function pickAndPrepareImage(images) {
@@ -303,6 +367,32 @@ function createGateElement() {
   gate.innerHTML = `
     <h1 class="gate-title">Nicole Grundhöfer</h1>
 
+    <div class="gate-intro-overlay" data-intro-overlay aria-hidden="true">
+      <div class="gate-intro-note gate-intro-note-start">
+        <span>Schnellstart?</span>
+        <svg viewBox="0 0 180 95" role="presentation" focusable="false">
+          <defs>
+            <marker id="intro-arrow-head-top" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" />
+            </marker>
+          </defs>
+          <path d="M 8 76 C 52 34, 108 24, 166 14" marker-end="url(#intro-arrow-head-top)" />
+        </svg>
+      </div>
+
+      <div class="gate-intro-note gate-intro-note-menu">
+        <span>Guck mal hier</span>
+        <svg viewBox="0 0 190 125" role="presentation" focusable="false">
+          <defs>
+            <marker id="intro-arrow-head-bottom" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" />
+            </marker>
+          </defs>
+          <path d="M 12 18 C 64 42, 122 54, 170 106" marker-end="url(#intro-arrow-head-bottom)" />
+        </svg>
+      </div>
+    </div>
+
     <button
       type="button"
       class="bypass-star"
@@ -320,13 +410,25 @@ function createGateElement() {
     </div>
 
     <div class="entry-card">
-      <div class="puzzle-area" data-puzzle-area>
+      <div class="puzzle-area">
         <div
           class="puzzle-board"
           data-puzzle-board
           role="group"
           aria-describedby="entry-gate-status"
         ></div>
+        <div
+          class="puzzle-view-control"
+          data-view-control
+          role="slider"
+          aria-label="Puzzle-Blickwinkel ziehen"
+          aria-valuemin="-1"
+          aria-valuemax="1"
+          aria-valuenow="0"
+          tabindex="0"
+        >
+          <span></span>
+        </div>
         <p id="entry-gate-status" class="puzzle-status" data-status aria-live="polite"></p>
       </div>
 

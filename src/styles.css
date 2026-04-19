@@ -617,6 +617,78 @@ body.gate-locked .page-shell {
   background: rgba(48, 34, 40, 0.88);
 }
 
+.gate-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  color: #c50000;
+  opacity: 1;
+  transition: opacity 620ms ease;
+}
+
+.gate-intro-overlay.is-fading {
+  opacity: 0;
+}
+
+.gate-intro-note {
+  position: absolute;
+  display: grid;
+  width: min(48vw, 320px);
+  color: #c50000;
+  font-family: "Bradley Hand", "Marker Felt", "Comic Sans MS", cursive;
+  font-size: clamp(2.1rem, 8vw, 4.8rem);
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: 0;
+  text-shadow:
+    0 1px 0 rgba(70, 0, 0, 0.22),
+    0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: rotate(-7deg);
+}
+
+.gate-intro-note svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: -0.2rem;
+  overflow: visible;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gate-intro-note path {
+  fill: none;
+}
+
+.gate-intro-note-start {
+  top: clamp(4.1rem, 10vh, 6rem);
+  right: clamp(3.7rem, 8vw, 6.5rem);
+  justify-items: end;
+}
+
+.gate-intro-note-start svg {
+  width: min(34vw, 210px);
+  transform: rotate(4deg);
+}
+
+.gate-intro-note-menu {
+  right: clamp(4.1rem, 8vw, 7rem);
+  bottom: clamp(4.2rem, 12vh, 6.5rem);
+  width: min(56vw, 360px);
+  justify-items: end;
+  transform: rotate(5deg);
+}
+
+.gate-intro-note-menu svg {
+  width: min(36vw, 240px);
+  margin-top: 0.15rem;
+  transform: rotate(-2deg);
+}
+
 .bypass-dialog {
   position: absolute;
   top: 4.2rem;
@@ -712,6 +784,45 @@ body.gate-locked .page-shell {
 
 .puzzle-board[data-viewing="true"] {
   animation-play-state: paused;
+}
+
+.puzzle-view-control {
+  position: relative;
+  width: min(54vw, 320px);
+  height: 2.3rem;
+  margin-top: -0.2rem;
+  cursor: grab;
+  touch-action: none;
+}
+
+.puzzle-view-control::before {
+  content: "";
+  position: absolute;
+  left: 0.4rem;
+  right: 0.4rem;
+  top: 50%;
+  height: 0.34rem;
+  border-radius: 999px;
+  background: rgba(255, 244, 228, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 244, 228, 0.16);
+  transform: translateY(-50%);
+}
+
+.puzzle-view-control span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 244, 228, 0.38);
+  background: rgba(18, 14, 18, 0.72);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  transform: translate(-50%, -50%);
+}
+
+.puzzle-view-control[data-active="true"] {
+  cursor: grabbing;
 }
 
 .puzzle-board::after {
@@ -1035,6 +1146,30 @@ body.gate-locked .page-shell {
 @media (max-width: 480px) {
   .entry-gate {
     padding: 0.75rem;
+  }
+
+  .gate-intro-note {
+    font-size: clamp(2.05rem, 14vw, 3.7rem);
+  }
+
+  .gate-intro-note-start {
+    top: 5.5rem;
+    right: 2.15rem;
+    width: min(58vw, 240px);
+  }
+
+  .gate-intro-note-start svg {
+    width: min(45vw, 170px);
+  }
+
+  .gate-intro-note-menu {
+    right: 2.65rem;
+    bottom: 5rem;
+    width: min(70vw, 250px);
+  }
+
+  .gate-intro-note-menu svg {
+    width: min(50vw, 180px);
   }
 
   .entry-card {
