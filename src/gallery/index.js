@@ -201,7 +201,7 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     modalClose.focus();
   };
 
-  const openBenchModal = () => {
+  const openArObjectModal = () => {
     modal.hidden = false;
     modalIcon.src = "/icons/menu-5.png";
     modalIcon.alt = "";
@@ -230,8 +230,8 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   const handleCanvasClick = (event) => {
     if (!modal.hidden) return;
     updateRaycastTarget(event);
-    if (hoveredObject?.userData.kind === "bench") {
-      openBenchModal();
+    if (hoveredObject?.userData.kind === "arSculpture") {
+      openArObjectModal();
     } else if (hoveredObject?.userData.frame) {
       openPaintingModal(hoveredObject);
     }
@@ -608,7 +608,7 @@ function buildMuseum(scene, frames, interactables, wallpaper) {
   scene.add(ceiling);
 
   addTrim(scene, width, depth);
-  addBench(scene, interactables);
+  addGlobeSculpture(scene, interactables);
   addPaintings(scene, frames, interactables);
 }
 
@@ -703,66 +703,71 @@ function addPaintings(scene, frames, interactables) {
   });
 }
 
-function addBench(scene, interactables) {
+function addGlobeSculpture(scene, interactables) {
   const group = new THREE.Group();
-  group.position.set(ROOM.minX * SCALE + 0.52, 0, 1.55);
-  group.rotation.y = -Math.PI / 2;
+  group.position.set(ROOM.minX * SCALE + 0.72, 0, 1.55);
 
-  const wood = new THREE.MeshStandardMaterial({
-    color: "#8c5630",
-    roughness: 0.58,
-    metalness: 0.03,
-  });
-  const darkWood = new THREE.MeshStandardMaterial({
-    color: "#5d381f",
-    roughness: 0.64,
+  const stone = new THREE.MeshStandardMaterial({
+    color: "#d8c9b2",
+    roughness: 0.78,
     metalness: 0.02,
   });
-  const metal = new THREE.MeshStandardMaterial({
-    color: "#24211f",
-    roughness: 0.46,
-    metalness: 0.45,
+  const bronze = new THREE.MeshStandardMaterial({
+    color: "#6e5535",
+    roughness: 0.42,
+    metalness: 0.38,
+  });
+  const globeMaterial = new THREE.MeshStandardMaterial({
+    color: "#f3ead8",
+    roughness: 0.52,
+    metalness: 0.08,
+  });
+  const lineMaterial = new THREE.MeshStandardMaterial({
+    color: "#2f2a23",
+    roughness: 0.35,
+    metalness: 0.3,
   });
 
-  const makePart = (geometry, material, position, interactive = false) => {
+  const makePart = (geometry, material, position, interactive = true) => {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(...position);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     if (interactive) {
-      mesh.userData.kind = "bench";
+      mesh.userData.kind = "arSculpture";
       interactables.push(mesh);
     }
     group.add(mesh);
     return mesh;
   };
 
-  makePart(new THREE.BoxGeometry(2.35, 0.16, 0.68), wood, [0, 0.52, 0], true);
-  makePart(new THREE.BoxGeometry(2.42, 0.64, 0.14), darkWood, [0, 0.88, 0.36], true);
-  makePart(new THREE.BoxGeometry(2.28, 0.08, 0.08), darkWood, [0, 0.64, -0.34], true);
+  makePart(new THREE.CylinderGeometry(0.36, 0.46, 0.2, 36), stone, [0, 0.1, 0]);
+  makePart(new THREE.CylinderGeometry(0.28, 0.34, 0.78, 36), stone, [0, 0.59, 0]);
+  makePart(new THREE.CylinderGeometry(0.42, 0.34, 0.12, 36), bronze, [0, 1.04, 0]);
 
-  const legGeometry = new THREE.BoxGeometry(0.1, 0.48, 0.1);
-  [
-    [-0.96, 0.25, -0.22],
-    [0.96, 0.25, -0.22],
-    [-0.96, 0.25, 0.22],
-    [0.96, 0.25, 0.22],
-  ].forEach((position) => makePart(legGeometry, metal, position));
+  const globe = makePart(new THREE.SphereGeometry(0.34, 48, 24), globeMaterial, [0, 1.45, 0]);
+  globe.rotation.y = -0.38;
 
-  const footGeometry = new THREE.BoxGeometry(0.28, 0.05, 0.14);
-  [
-    [-0.96, 0.03, -0.22],
-    [0.96, 0.03, -0.22],
-    [-0.96, 0.03, 0.22],
-    [0.96, 0.03, 0.22],
-  ].forEach((position) => makePart(footGeometry, metal, position));
+  const equator = makePart(new THREE.TorusGeometry(0.35, 0.011, 8, 96), lineMaterial, [0, 1.45, 0], false);
+  equator.rotation.x = Math.PI / 2;
+
+  const meridianA = makePart(new THREE.TorusGeometry(0.35, 0.01, 8, 96), lineMaterial, [0, 1.45, 0], false);
+  meridianA.rotation.y = Math.PI / 2;
+  meridianA.rotation.z = 0.22;
+
+  const meridianB = makePart(new THREE.TorusGeometry(0.35, 0.008, 8, 96), lineMaterial, [0, 1.45, 0], false);
+  meridianB.rotation.y = Math.PI / 2;
+  meridianB.rotation.z = Math.PI / 2;
+
+  const axis = makePart(new THREE.CylinderGeometry(0.015, 0.015, 0.96, 16), bronze, [0, 1.45, 0], false);
+  axis.rotation.z = 0.28;
 
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.75, 1.15),
+    new THREE.CircleGeometry(0.78, 48),
     new THREE.MeshBasicMaterial({
       color: "#3a2618",
       transparent: true,
-      opacity: 0.11,
+      opacity: 0.09,
       depthWrite: false,
     }),
   );
