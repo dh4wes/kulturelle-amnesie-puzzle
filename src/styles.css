@@ -729,8 +729,6 @@ body.gate-locked .page-shell {
   display: grid;
   gap: 1.35rem;
   justify-items: center;
-  perspective: 900px;
-  transform-style: preserve-3d;
 }
 
 .puzzle-area::before {
@@ -750,10 +748,6 @@ body.gate-locked .page-shell {
 .puzzle-board {
   position: relative;
   display: grid;
-  --puzzle-rotate-x: 8deg;
-  --puzzle-rotate-y: -6deg;
-  --puzzle-float-start: -0.7rem;
-  --puzzle-float-end: -1.25rem;
   width: min(72vw, 68vh, 600px);
   aspect-ratio: 1;
   padding: 0.42rem;
@@ -765,13 +759,7 @@ body.gate-locked .page-shell {
     inset 0 0 0 1px rgba(255, 255, 255, 0.055);
   gap: 0.32rem;
   touch-action: manipulation;
-  transform:
-    rotateX(var(--puzzle-rotate-x))
-    rotateY(var(--puzzle-rotate-y))
-    translateY(var(--puzzle-float-start));
-  transform-style: preserve-3d;
-  transition: transform 220ms ease;
-  animation: puzzleFloat 5.6s ease-in-out infinite;
+  z-index: 2;
 }
 
 .puzzle-board::after {
@@ -800,17 +788,20 @@ body.gate-locked .page-shell {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background-color: #2b2026;
   background-repeat: no-repeat;
-  cursor: pointer;
+  cursor: default;
   position: relative;
   overflow: hidden;
   touch-action: manipulation;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 140ms ease, box-shadow 140ms ease, opacity 180ms ease;
+  transition: box-shadow 140ms ease, opacity 180ms ease;
 }
 
-.puzzle-tile:hover {
-  transform: translateY(-1px);
+.puzzle-tile[data-movable="true"] {
+  cursor: pointer;
+}
+
+.puzzle-tile[data-movable="true"]:hover {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.26);
 }
 
@@ -920,23 +911,6 @@ body.gate-locked .page-shell {
   50% {
     opacity: 1;
     transform: translateY(-0.16rem) scaleX(1.16);
-  }
-}
-
-@keyframes puzzleFloat {
-  0%,
-  100% {
-    transform:
-      rotateX(var(--puzzle-rotate-x))
-      rotateY(var(--puzzle-rotate-y))
-      translateY(var(--puzzle-float-start));
-  }
-
-  50% {
-    transform:
-      rotateX(var(--puzzle-rotate-x))
-      rotateY(var(--puzzle-rotate-y))
-      translateY(var(--puzzle-float-end));
   }
 }
 
@@ -1080,10 +1054,6 @@ body.gate-locked .page-shell {
 
   .puzzle-board {
     width: min(90vw, 75vh);
-    --puzzle-rotate-x: 6deg;
-    --puzzle-rotate-y: -3deg;
-    --puzzle-float-start: -0.55rem;
-    --puzzle-float-end: -1rem;
   }
 
   .gallery-map {
@@ -1111,10 +1081,6 @@ body.gate-locked .page-shell {
 
   .puzzle-board {
     width: min(88vw, 52vh);
-    --puzzle-rotate-x: 4deg;
-    --puzzle-rotate-y: 0deg;
-    --puzzle-float-start: -0.35rem;
-    --puzzle-float-end: -0.72rem;
     gap: 0.24rem;
     padding: 0.32rem;
     border-radius: 0.85rem;
@@ -1209,12 +1175,6 @@ body.gate-locked .page-shell {
     height: 2.7rem;
   }
 
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .puzzle-board {
-    animation: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

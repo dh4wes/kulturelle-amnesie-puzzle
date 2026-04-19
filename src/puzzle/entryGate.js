@@ -105,6 +105,7 @@ export async function initEntryGate(options = {}) {
         button.style.backgroundPosition = `${tilePosition.x} ${tilePosition.y}`;
         button.disabled = solved;
         button.dataset.correct = String(tileValue === index + 1);
+        button.dataset.movable = String(movable);
         button.dataset.tileValue = String(tileValue);
         button.setAttribute(
           "aria-label",
@@ -112,11 +113,9 @@ export async function initEntryGate(options = {}) {
             ? `Kachel ${tileValue} verschieben`
             : `Kachel ${tileValue} liegt nicht neben dem leeren Feld`,
         );
-        button.addEventListener("pointerup", (event) => {
-          event.preventDefault();
+        button.addEventListener("click", () => {
           handleTileMoveByValue(tileValue);
         });
-        button.addEventListener("click", (event) => event.preventDefault());
 
         boardElement.appendChild(button);
       });
