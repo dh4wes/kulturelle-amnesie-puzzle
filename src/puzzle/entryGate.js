@@ -51,6 +51,7 @@ export async function initEntryGate(options = {}) {
     const gate = createGateElement();
     root.replaceChildren(gate);
 
+    const puzzleArea = gate.querySelector("[data-puzzle-area]");
     const boardElement = gate.querySelector("[data-puzzle-board]");
     const statusElement = gate.querySelector("[data-status]");
     const infoToggle = gate.querySelector("[data-info-toggle]");
@@ -173,6 +174,26 @@ export async function initEntryGate(options = {}) {
       infoToggle.focus();
     };
 
+    const updatePuzzleViewingAngle = (event) => {
+      if (solved || !puzzleArea) return;
+
+      const bounds = puzzleArea.getBoundingClientRect();
+      const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+      const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+      const rotateX = clampNumber(8 - y * 18, -8, 18);
+      const rotateY = clampNumber(-6 + x * 22, -18, 14);
+
+      boardElement.dataset.viewing = "true";
+      boardElement.style.setProperty("--puzzle-rotate-x", `${rotateX.toFixed(2)}deg`);
+      boardElement.style.setProperty("--puzzle-rotate-y", `${rotateY.toFixed(2)}deg`);
+    };
+
+    const resetPuzzleViewingAngle = () => {
+      boardElement.dataset.viewing = "false";
+      boardElement.style.removeProperty("--puzzle-rotate-x");
+      boardElement.style.removeProperty("--puzzle-rotate-y");
+    };
+
     gate.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !infoOverlay.hidden) {
         closeInfoOverlay();
@@ -194,6 +215,9 @@ export async function initEntryGate(options = {}) {
       referenceFrame.hidden = !referenceToggle.checked;
     });
 
+    puzzleArea?.addEventListener("pointermove", updatePuzzleViewingAngle);
+    puzzleArea?.addEventListener("pointerleave", resetPuzzleViewingAngle);
+    puzzleArea?.addEventListener("pointercancel", resetPuzzleViewingAngle);
     infoToggle.addEventListener("click", openInfoOverlay);
     infoClose.addEventListener("click", closeInfoOverlay);
     infoOverlay.addEventListener("click", (event) => {
@@ -226,6 +250,10 @@ export async function initEntryGate(options = {}) {
     unlockPageShell(pageShell);
     root.replaceChildren();
   }
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 async function pickAndPrepareImage(images) {
@@ -292,7 +320,7 @@ function createGateElement() {
     </div>
 
     <div class="entry-card">
-      <div class="puzzle-area">
+      <div class="puzzle-area" data-puzzle-area>
         <div
           class="puzzle-board"
           data-puzzle-board

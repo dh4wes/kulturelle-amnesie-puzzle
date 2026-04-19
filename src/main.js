@@ -13,6 +13,9 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     root: document.getElementById("gallery-root"),
     images,
     wallpaper: appearance?.galleryWallpaper,
+    wallpaperColor: appearance?.galleryWallpaperColor,
+    wallpaperImages: appearance?.galleryWallpaperImages,
+    galleryImages: appearance?.galleryImages,
   });
 
   initEntryGate({

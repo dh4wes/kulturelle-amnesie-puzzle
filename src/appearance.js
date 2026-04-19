@@ -58,6 +58,69 @@ function applyBackgroundColor(value) {
   document.documentElement.style.setProperty("--site-background", value);
 }
 
+function resolveSiteAssetSrc(siteBaseUrl, value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  if (value.startsWith("/")) {
+    return new URL(value, siteBaseUrl).toString();
+  }
+
+  return value;
+}
+
+function normalizeGalleryImages(siteBaseUrl, value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const input = typeof item === "object" && item ? item : {};
+      const src = resolveSiteAssetSrc(siteBaseUrl, input.src);
+
+      if (!src) {
+        return null;
+      }
+
+      return {
+        id: typeof input.id === "string" ? input.id : src,
+        src,
+        title: typeof input.title === "string" ? input.title : "Werk",
+        body: typeof input.body === "string" ? input.body : "",
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeGalleryWallpaperImages(siteBaseUrl, value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const input = typeof item === "object" && item ? item : {};
+      const src = resolveSiteAssetSrc(siteBaseUrl, input.src);
+
+      if (!src) {
+        return null;
+      }
+
+      return {
+        id: typeof input.id === "string" ? input.id : src,
+        src,
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 4);
+}
+
 export async function applySiteAppearance() {
   const siteBaseUrl = getSiteBaseUrl();
   const appearanceUrl = new URL("/api/appearance", siteBaseUrl);
@@ -83,12 +146,18 @@ export async function applySiteAppearance() {
       applySystemFont();
       return {
         galleryWallpaper: normalizeGalleryWallpaper(appearance?.galleryWallpaper),
+        galleryWallpaperColor: appearance?.galleryWallpaperColor,
+        galleryImages: normalizeGalleryImages(siteBaseUrl, appearance?.galleryImages),
+        galleryWallpaperImages: normalizeGalleryWallpaperImages(siteBaseUrl, appearance?.galleryWallpaperImages),
       };
     }
 
     applySelectedFont(siteBaseUrl, fontId);
     return {
       galleryWallpaper: normalizeGalleryWallpaper(appearance?.galleryWallpaper),
+      galleryWallpaperColor: appearance?.galleryWallpaperColor,
+      galleryImages: normalizeGalleryImages(siteBaseUrl, appearance?.galleryImages),
+      galleryWallpaperImages: normalizeGalleryWallpaperImages(siteBaseUrl, appearance?.galleryWallpaperImages),
     };
   } catch (error) {
     console.warn("[appearance] Failed to load site appearance.", error);
@@ -96,5 +165,8 @@ export async function applySiteAppearance() {
 
   return {
     galleryWallpaper: "botanical",
+    galleryWallpaperColor: "#efe8dc",
+    galleryImages: [],
+    galleryWallpaperImages: [],
   };
 }

@@ -34,14 +34,27 @@ function loadModelViewer() {
   return modelViewerLoadPromise;
 }
 
-export function initGallery({ root, images = [], wallpaper = "botanical" }) {
+export function initGallery({
+  root,
+  images = [],
+  wallpaper = "botanical",
+  wallpaperColor = "#efe8dc",
+  wallpaperImages = [],
+  galleryImages = [],
+}) {
   if (!root) {
     return {
       activate() {},
     };
   }
 
-  const frames = createGalleryFrames(getGalleryFrameImages(images));
+  const frameSources = galleryImages.length ? galleryImages.map((image) => image.src) : getGalleryFrameImages(images);
+  const frames = createGalleryFrames(frameSources);
+  if (galleryImages.length) {
+    frames.forEach((frame, index) => {
+      frame.card = galleryImages[index % galleryImages.length];
+    });
+  }
   root.innerHTML = createGalleryMarkup();
 
   const viewport = root.querySelector("[data-gallery-viewport]");
@@ -58,6 +71,7 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   const modalImage = root.querySelector("[data-gallery-modal-image]");
   const modalArViewer = root.querySelector("[data-gallery-ar-viewer]");
   const modalTitle = root.querySelector("[data-gallery-modal-title]");
+  const modalBody = root.querySelector("[data-gallery-modal-body]");
   const modalLink = root.querySelector("[data-gallery-link]");
   const modalSourceLink = root.querySelector("[data-gallery-source-link]");
   const modalClose = root.querySelector("[data-gallery-close]");
@@ -124,7 +138,11 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   };
 
   buildMiniMapMarkers(frames, mapTrack, mapList, moveToFrame);
-  buildMuseum(scene, frames, interactables, wallpaper);
+  buildMuseum(scene, frames, interactables, {
+    type: wallpaper,
+    color: wallpaperColor,
+    images: wallpaperImages,
+  });
   syncCamera(camera, player);
   renderFrame();
 
@@ -180,7 +198,9 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     modal.hidden = false;
     modalIcon.src = navigationItem.icon;
     modalIcon.alt = "";
-    modalTitle.textContent = navigationItem.label;
+    modalTitle.textContent = painting.userData.frame.card?.title || navigationItem.label;
+    modalBody.textContent = painting.userData.frame.card?.body || "";
+    modalBody.hidden = !painting.userData.frame.card?.body;
     modalImage.hidden = false;
     modalImage.src = imageSrc;
     modalImage.alt = `${title} in Nahansicht`;
@@ -198,6 +218,8 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     modalIcon.src = "/icons/menu-5.png";
     modalIcon.alt = "";
     modalTitle.textContent = "AR Objekt";
+    modalBody.textContent = "";
+    modalBody.hidden = true;
     modalImage.hidden = true;
     modalImage.removeAttribute("src");
     modalArViewer.hidden = false;
@@ -372,6 +394,7 @@ function createGalleryMarkup() {
             <img class="gallery-modal-icon" data-gallery-modal-icon alt="" />
             <span id="gallery-modal-title" data-gallery-modal-title></span>
           </h2>
+          <p class="gallery-modal-body" data-gallery-modal-body hidden></p>
           <img class="gallery-modal-artwork" data-gallery-modal-image alt="" />
           <model-viewer
             class="gallery-ar-viewer"
@@ -639,6 +662,7 @@ function addTrim(scene, width, depth) {
 
 function addPaintings(scene, frames, interactables) {
   const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin("anonymous");
 
   frames.forEach((frame) => {
     const group = new THREE.Group();
@@ -800,6 +824,7 @@ function syncCamera(camera, player) {
 
 function resolveArtworkSrc(imagePath) {
   if (!imagePath) return "";
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
   if (imagePath.startsWith("/puzzle-images/")) return imagePath;
   if (imagePath.startsWith("/")) return imagePath;
 
@@ -807,7 +832,11 @@ function resolveArtworkSrc(imagePath) {
   return `/puzzle-images/${filename}`;
 }
 
-function createWallpaperTexture(wallpaper) {
+function createWallpaperTexture(wallpaperSettings) {
+  const wallpaper = typeof wallpaperSettings === "string" ? wallpaperSettings : wallpaperSettings?.type;
+  const wallpaperColor =
+    typeof wallpaperSettings === "object" && typeof wallpaperSettings.color === "string" ? wallpaperSettings.color : "#efe8dc";
+  const wallpaperImages = Array.isArray(wallpaperSettings?.images) ? wallpaperSettings.images : [];
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
   canvas.height = 1024;
@@ -819,6 +848,8 @@ function createWallpaperTexture(wallpaper) {
     drawArtNouveauWallpaper(context, canvas);
   } else if (wallpaper === "icons") {
     drawIconWallpaperBase(context, canvas);
+  } else if (wallpaper === "custom-images") {
+    drawCustomImageWallpaperBase(context, canvas, wallpaperColor);
   } else {
     drawBotanicalWallpaper(context, canvas);
   }
@@ -831,9 +862,63 @@ function createWallpaperTexture(wallpaper) {
 
   if (wallpaper === "icons") {
     hydrateIconWallpaper(context, canvas, texture);
+  } else if (wallpaper === "custom-images") {
+    hydrateCustomImageWallpaper(context, canvas, texture, wallpaperImages);
   }
 
   return texture;
+}
+
+function drawCustomImageWallpaperBase(context, canvas, color) {
+  context.fillStyle = /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#efe8dc";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.fillStyle = "rgba(255, 255, 255, 0.16)";
+  for (let y = 0; y < canvas.height; y += 112) {
+    context.fillRect(0, y, canvas.width, 1);
+  }
+}
+
+function hydrateCustomImageWallpaper(context, canvas, texture, wallpaperImages) {
+  const sources = wallpaperImages.map((image) => image?.src).filter(Boolean).slice(0, 4);
+
+  if (!sources.length) {
+    return;
+  }
+
+  sources.forEach((source, index) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      drawWallpaperImageTile(context, canvas, image, index, sources.length);
+      texture.needsUpdate = true;
+    };
+    image.src = source;
+  });
+}
+
+function drawWallpaperImageTile(context, canvas, image, index, count) {
+  const tileSize = count <= 1 ? 132 : 116;
+  const gap = count <= 2 ? 176 : 164;
+  const offsetX = [52, 242, 124, 326][index] ?? 52;
+  const offsetY = [72, 246, 424, 610][index] ?? 72;
+
+  context.save();
+  context.globalAlpha = 0.28;
+
+  for (let y = -tileSize; y < canvas.height + tileSize; y += gap) {
+    for (let x = -tileSize; x < canvas.width + tileSize; x += gap) {
+      const drawX = x + offsetX + ((y / gap) % 2) * 42;
+      const drawY = y + offsetY;
+      context.save();
+      context.translate(drawX + tileSize / 2, drawY + tileSize / 2);
+      context.rotate(((index % 2 === 0 ? -1 : 1) * Math.PI) / 48);
+      context.drawImage(image, -tileSize / 2, -tileSize / 2, tileSize, tileSize);
+      context.restore();
+    }
+  }
+
+  context.restore();
 }
 
 function drawIconWallpaperBase(context, canvas) {
