@@ -121,6 +121,19 @@ function normalizeGalleryWallpaperImages(siteBaseUrl, value) {
     .slice(0, 4);
 }
 
+function normalizeGalleryFrame(value) {
+  const input = typeof value === "object" && value ? value : {};
+  const color = typeof input.color === "string" && /^#[0-9a-fA-F]{6}$/.test(input.color) ? input.color : "#6e5335";
+  const width = typeof input.width === "number" && Number.isFinite(input.width) ? input.width : 0.12;
+  const style = ["classic", "slim", "shadowbox"].includes(input.style) ? input.style : "classic";
+
+  return {
+    color,
+    width: Math.min(Math.max(width, 0.06), 0.24),
+    style,
+  };
+}
+
 export async function applySiteAppearance() {
   const siteBaseUrl = getSiteBaseUrl();
   const appearanceUrl = new URL("/api/appearance", siteBaseUrl);
@@ -147,6 +160,7 @@ export async function applySiteAppearance() {
       return {
         galleryWallpaper: normalizeGalleryWallpaper(appearance?.galleryWallpaper),
         galleryWallpaperColor: appearance?.galleryWallpaperColor,
+        galleryFrame: normalizeGalleryFrame(appearance?.galleryFrame),
         galleryImages: normalizeGalleryImages(siteBaseUrl, appearance?.galleryImages),
         galleryWallpaperImages: normalizeGalleryWallpaperImages(siteBaseUrl, appearance?.galleryWallpaperImages),
       };
@@ -156,6 +170,7 @@ export async function applySiteAppearance() {
     return {
       galleryWallpaper: normalizeGalleryWallpaper(appearance?.galleryWallpaper),
       galleryWallpaperColor: appearance?.galleryWallpaperColor,
+      galleryFrame: normalizeGalleryFrame(appearance?.galleryFrame),
       galleryImages: normalizeGalleryImages(siteBaseUrl, appearance?.galleryImages),
       galleryWallpaperImages: normalizeGalleryWallpaperImages(siteBaseUrl, appearance?.galleryWallpaperImages),
     };
@@ -166,6 +181,7 @@ export async function applySiteAppearance() {
   return {
     galleryWallpaper: "botanical",
     galleryWallpaperColor: "#efe8dc",
+    galleryFrame: normalizeGalleryFrame(),
     galleryImages: [],
     galleryWallpaperImages: [],
   };

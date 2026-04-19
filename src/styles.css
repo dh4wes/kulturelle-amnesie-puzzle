@@ -560,9 +560,9 @@ body.gate-locked .page-shell {
   padding: 1rem;
   overflow-y: auto;
   background:
-    linear-gradient(180deg, rgba(9, 8, 11, 0.58), rgba(28, 23, 27, 0.42) 54%, rgba(232, 219, 198, 0.18)),
-    linear-gradient(115deg, rgba(255, 245, 212, 0.06), transparent 42%, rgba(0, 0, 0, 0.1));
-  backdrop-filter: blur(5px);
+    linear-gradient(180deg, rgba(9, 8, 11, 0.32), rgba(28, 23, 27, 0.2) 54%, rgba(232, 219, 198, 0.08)),
+    linear-gradient(115deg, rgba(255, 245, 212, 0.025), transparent 42%, rgba(0, 0, 0, 0.04));
+  backdrop-filter: blur(2px);
   opacity: 1;
   transition:
     opacity 1200ms ease,
@@ -579,8 +579,8 @@ body.gate-locked .page-shell {
   height: 42vh;
   pointer-events: none;
   background:
-    linear-gradient(180deg, transparent, rgba(255, 244, 228, 0.06) 28%, rgba(9, 8, 11, 0.08)),
-    repeating-linear-gradient(90deg, rgba(255, 244, 228, 0.035) 0 1px, transparent 1px 12vw);
+    linear-gradient(180deg, transparent, rgba(255, 244, 228, 0.025) 28%, rgba(9, 8, 11, 0.035)),
+    repeating-linear-gradient(90deg, rgba(255, 244, 228, 0.018) 0 1px, transparent 1px 12vw);
   transform: perspective(720px) rotateX(64deg);
   transform-origin: 50% 100%;
 }
@@ -636,26 +636,34 @@ body.gate-locked .page-shell {
 
 .gate-intro-note {
   position: absolute;
-  display: grid;
-  width: min(48vw, 320px);
+  z-index: 1;
   color: #c50000;
   font-family: "Bradley Hand", "Marker Felt", "Comic Sans MS", cursive;
-  font-size: clamp(2.1rem, 8vw, 4.8rem);
+  font-size: clamp(2.1rem, 7vw, 4.2rem);
   font-weight: 700;
-  line-height: 0.86;
+  line-height: 0.9;
   letter-spacing: 0;
   text-shadow:
     0 1px 0 rgba(70, 0, 0, 0.22),
     0 8px 24px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+
+.gate-intro-note-start {
   transform: rotate(-7deg);
 }
 
-.gate-intro-note svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-top: -0.2rem;
+.gate-intro-note-menu {
+  transform: rotate(5deg);
+}
+
+.gate-intro-arrows {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: visible;
+  fill: none;
   stroke: currentColor;
   stroke-width: 8;
   stroke-linecap: round;
@@ -669,31 +677,6 @@ body.gate-locked .page-shell {
 .gate-intro-arrow-head {
   fill: none;
   stroke-width: 8.5;
-}
-
-.gate-intro-note-start {
-  top: clamp(4.1rem, 10vh, 6rem);
-  right: clamp(3.7rem, 8vw, 6.5rem);
-  justify-items: end;
-}
-
-.gate-intro-note-start svg {
-  width: min(34vw, 210px);
-  transform: rotate(4deg);
-}
-
-.gate-intro-note-menu {
-  right: clamp(4.1rem, 8vw, 7rem);
-  bottom: clamp(4.2rem, 12vh, 6.5rem);
-  width: min(56vw, 360px);
-  justify-items: end;
-  transform: rotate(5deg);
-}
-
-.gate-intro-note-menu svg {
-  width: min(36vw, 240px);
-  margin-top: 0.15rem;
-  transform: rotate(-2deg);
 }
 
 .bypass-dialog {
@@ -774,12 +757,12 @@ body.gate-locked .page-shell {
   width: min(72vw, 68vh, 600px);
   aspect-ratio: 1;
   padding: 0.42rem;
-  background: rgba(18, 14, 18, 0.5);
+  background: rgba(18, 14, 18, 0.24);
   border-radius: 1rem;
   box-shadow:
-    0 48px 110px rgba(0, 0, 0, 0.44),
-    0 16px 42px rgba(255, 245, 173, 0.08),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    0 36px 90px rgba(0, 0, 0, 0.28),
+    0 12px 34px rgba(255, 245, 173, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.055);
   gap: 0.32rem;
   touch-action: manipulation;
   transform:
@@ -789,121 +772,6 @@ body.gate-locked .page-shell {
   transform-style: preserve-3d;
   transition: transform 220ms ease;
   animation: puzzleFloat 5.6s ease-in-out infinite;
-}
-
-.puzzle-plane-field {
-  position: absolute;
-  inset: clamp(-5rem, -9vw, -2.2rem);
-  z-index: 0;
-  pointer-events: none;
-  transform-style: preserve-3d;
-}
-
-.puzzle-plane-field span {
-  position: absolute;
-  left: var(--plane-left);
-  top: var(--plane-top);
-  width: var(--plane-width);
-  aspect-ratio: var(--plane-ratio);
-  border-radius: clamp(0.8rem, 2vw, 1.6rem);
-  border: 1px solid rgba(255, 245, 173, var(--plane-border, 0.12));
-  background:
-    linear-gradient(135deg, rgba(255, 245, 173, var(--plane-light, 0.12)), transparent 58%),
-    rgba(255, 244, 228, var(--plane-fill, 0.055));
-  opacity: var(--plane-opacity, 0.72);
-  filter: blur(var(--plane-blur, 0));
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, var(--plane-shadow, 0.18)),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.045);
-  transform:
-    translate3d(-50%, -50%, var(--plane-z))
-    rotateX(var(--plane-tilt-x))
-    rotateY(var(--plane-tilt-y))
-    rotateZ(var(--plane-rotate));
-  animation: planeDrift var(--plane-duration) ease-in-out infinite;
-  animation-delay: var(--plane-delay);
-}
-
-.puzzle-plane-field span:nth-child(1) {
-  --plane-left: 17%;
-  --plane-top: 20%;
-  --plane-width: min(34vw, 230px);
-  --plane-ratio: 1.55;
-  --plane-z: -120px;
-  --plane-tilt-x: 62deg;
-  --plane-tilt-y: -18deg;
-  --plane-rotate: -12deg;
-  --plane-duration: 9.4s;
-  --plane-delay: -3.6s;
-  --plane-blur: 1.1px;
-  --plane-opacity: 0.5;
-  --plane-low-opacity: 0.36;
-}
-
-.puzzle-plane-field span:nth-child(2) {
-  --plane-left: 83%;
-  --plane-top: 25%;
-  --plane-width: min(30vw, 200px);
-  --plane-ratio: 1.25;
-  --plane-z: 82px;
-  --plane-tilt-x: 54deg;
-  --plane-tilt-y: 16deg;
-  --plane-rotate: 14deg;
-  --plane-duration: 7.8s;
-  --plane-delay: -1.4s;
-  --plane-fill: 0.075;
-  --plane-light: 0.16;
-  --plane-shadow: 0.24;
-  --plane-low-opacity: 0.52;
-}
-
-.puzzle-plane-field span:nth-child(3) {
-  --plane-left: 12%;
-  --plane-top: 76%;
-  --plane-width: min(38vw, 260px);
-  --plane-ratio: 1.95;
-  --plane-z: 48px;
-  --plane-tilt-x: 68deg;
-  --plane-tilt-y: 12deg;
-  --plane-rotate: 10deg;
-  --plane-duration: 8.6s;
-  --plane-delay: -5.2s;
-  --plane-fill: 0.07;
-  --plane-low-opacity: 0.5;
-}
-
-.puzzle-plane-field span:nth-child(4) {
-  --plane-left: 88%;
-  --plane-top: 78%;
-  --plane-width: min(36vw, 240px);
-  --plane-ratio: 1.45;
-  --plane-z: -88px;
-  --plane-tilt-x: 58deg;
-  --plane-tilt-y: -22deg;
-  --plane-rotate: -18deg;
-  --plane-duration: 10.2s;
-  --plane-delay: -6.4s;
-  --plane-blur: 0.9px;
-  --plane-opacity: 0.54;
-  --plane-low-opacity: 0.38;
-}
-
-.puzzle-plane-field span:nth-child(5) {
-  --plane-left: 50%;
-  --plane-top: 50%;
-  --plane-width: min(82vw, 620px);
-  --plane-ratio: 2.8;
-  --plane-z: -180px;
-  --plane-tilt-x: 72deg;
-  --plane-tilt-y: 0deg;
-  --plane-rotate: 0deg;
-  --plane-duration: 12s;
-  --plane-delay: -8s;
-  --plane-blur: 1.6px;
-  --plane-opacity: 0.34;
-  --plane-low-opacity: 0.22;
-  --plane-border: 0.08;
-  --plane-fill: 0.04;
 }
 
 .puzzle-board::after {
@@ -935,6 +803,9 @@ body.gate-locked .page-shell {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 140ms ease, box-shadow 140ms ease, opacity 180ms ease;
 }
 
@@ -1066,29 +937,6 @@ body.gate-locked .page-shell {
       rotateX(var(--puzzle-rotate-x))
       rotateY(var(--puzzle-rotate-y))
       translateY(var(--puzzle-float-end));
-  }
-}
-
-@keyframes planeDrift {
-  0%,
-  100% {
-    opacity: var(--plane-low-opacity, 0.48);
-    transform:
-      translate3d(-50%, -50%, var(--plane-z))
-      translate(-0.4rem, -0.25rem)
-      rotateX(var(--plane-tilt-x))
-      rotateY(var(--plane-tilt-y))
-      rotateZ(var(--plane-rotate));
-  }
-
-  50% {
-    opacity: var(--plane-opacity, 0.72);
-    transform:
-      translate3d(-50%, -50%, var(--plane-z))
-      translate(0.45rem, 0.6rem)
-      rotateX(calc(var(--plane-tilt-x) + 4deg))
-      rotateY(calc(var(--plane-tilt-y) - 3deg))
-      rotateZ(calc(var(--plane-rotate) + 2deg));
   }
 }
 
@@ -1253,29 +1101,7 @@ body.gate-locked .page-shell {
   }
 
   .gate-intro-note {
-    font-size: clamp(2.05rem, 14vw, 3.7rem);
-  }
-
-  .gate-intro-note-start {
-    top: 4.4rem;
-    right: 1.15rem;
-    width: min(64vw, 250px);
-  }
-
-  .gate-intro-note-start svg {
-    width: min(52vw, 190px);
-    margin-top: -0.45rem;
-  }
-
-  .gate-intro-note-menu {
-    right: 1.55rem;
-    bottom: 2.55rem;
-    width: min(74vw, 270px);
-  }
-
-  .gate-intro-note-menu svg {
-    width: min(55vw, 200px);
-    margin-top: -0.1rem;
+    font-size: clamp(2rem, 13vw, 3.35rem);
   }
 
   .entry-card {

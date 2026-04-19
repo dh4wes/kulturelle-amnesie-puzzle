@@ -16,6 +16,7 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     wallpaperColor: appearance?.galleryWallpaperColor,
     wallpaperImages: appearance?.galleryWallpaperImages,
     galleryImages: appearance?.galleryImages,
+    frame: appearance?.galleryFrame,
   });
 
   initEntryGate({

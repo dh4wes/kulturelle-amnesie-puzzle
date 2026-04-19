@@ -105,13 +105,18 @@ export async function initEntryGate(options = {}) {
         button.style.backgroundPosition = `${tilePosition.x} ${tilePosition.y}`;
         button.disabled = solved;
         button.dataset.correct = String(tileValue === index + 1);
+        button.dataset.tileValue = String(tileValue);
         button.setAttribute(
           "aria-label",
           movable
             ? `Kachel ${tileValue} verschieben`
             : `Kachel ${tileValue} liegt nicht neben dem leeren Feld`,
         );
-        button.addEventListener("click", () => handleTileMove(index));
+        button.addEventListener("pointerup", (event) => {
+          event.preventDefault();
+          handleTileMoveByValue(tileValue);
+        });
+        button.addEventListener("click", (event) => event.preventDefault());
 
         boardElement.appendChild(button);
       });
@@ -138,6 +143,15 @@ export async function initEntryGate(options = {}) {
         },
         { once: true },
       );
+    };
+
+    const handleTileMoveByValue = (tileValue) => {
+      if (solved) return;
+
+      const tileIndex = board.tiles.indexOf(tileValue);
+      if (tileIndex >= 0) {
+        handleTileMove(tileIndex);
+      }
     };
 
     const handleTileMove = (tileIndex) => {
@@ -234,15 +248,125 @@ export async function initEntryGate(options = {}) {
 
 function setupIntroOverlay(gate) {
   const overlay = gate.querySelector("[data-intro-overlay]");
+  const startLabel = overlay?.querySelector("[data-intro-start-label]");
+  const menuLabel = overlay?.querySelector("[data-intro-menu-label]");
+  const arrows = overlay?.querySelector("[data-intro-arrows]");
+  const startLine = overlay?.querySelector("[data-intro-start-line]");
+  const startHead = overlay?.querySelector("[data-intro-start-head]");
+  const menuLine = overlay?.querySelector("[data-intro-menu-line]");
+  const menuHead = overlay?.querySelector("[data-intro-menu-head]");
+  const startTarget = gate.querySelector("[data-bypass-star]");
+  const menuTarget = gate.querySelector("[data-info-toggle]");
 
-  if (!overlay) return;
+  if (
+    !overlay ||
+    !startLabel ||
+    !menuLabel ||
+    !arrows ||
+    !startLine ||
+    !startHead ||
+    !menuLine ||
+    !menuHead ||
+    !startTarget ||
+    !menuTarget
+  ) {
+    return;
+  }
+
+  const positionOverlay = () => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    arrows.setAttribute("viewBox", `0 0 ${viewportWidth} ${viewportHeight}`);
+
+    const startTargetRect = startTarget.getBoundingClientRect();
+    const menuTargetRect = menuTarget.getBoundingClientRect();
+    const startTargetPoint = getRectCenter(startTargetRect);
+    const menuTargetPoint = getRectCenter(menuTargetRect);
+
+    positionLabel(startLabel, {
+      x: startTargetPoint.x - (viewportWidth < 520 ? 250 : 350),
+      y: startTargetPoint.y + (viewportWidth < 520 ? 34 : 42),
+      viewportWidth,
+      viewportHeight,
+    });
+    positionLabel(menuLabel, {
+      x: menuTargetPoint.x - (viewportWidth < 520 ? 210 : 300),
+      y: menuTargetPoint.y - (viewportWidth < 520 ? 128 : 140),
+      viewportWidth,
+      viewportHeight,
+    });
+
+    const startLabelRect = startLabel.getBoundingClientRect();
+    const menuLabelRect = menuLabel.getBoundingClientRect();
+    const startAnchor = {
+      x: startLabelRect.right - 12,
+      y: startLabelRect.top + startLabelRect.height * 0.42,
+    };
+    const menuAnchor = {
+      x: menuLabelRect.right - 8,
+      y: menuLabelRect.bottom + 8,
+    };
+
+    drawArrow(startLine, startHead, startAnchor, startTargetPoint, {
+      x: (startAnchor.x + startTargetPoint.x) * 0.5,
+      y: startTargetPoint.y + 34,
+    });
+    drawArrow(menuLine, menuHead, menuAnchor, menuTargetPoint, {
+      x: (menuAnchor.x + menuTargetPoint.x) * 0.55,
+      y: menuTargetPoint.y - 34,
+    });
+  };
 
   const removeOverlay = () => overlay.remove();
+  window.requestAnimationFrame(positionOverlay);
+  window.addEventListener("resize", positionOverlay);
   window.setTimeout(() => {
     overlay.classList.add("is-fading");
-    overlay.addEventListener("transitionend", removeOverlay, { once: true });
-    window.setTimeout(removeOverlay, 700);
+    overlay.addEventListener(
+      "transitionend",
+      () => {
+        window.removeEventListener("resize", positionOverlay);
+        removeOverlay();
+      },
+      { once: true },
+    );
+    window.setTimeout(() => {
+      window.removeEventListener("resize", positionOverlay);
+      removeOverlay();
+    }, 700);
   }, INTRO_OVERLAY_MS);
+}
+
+function getRectCenter(rect) {
+  return {
+    x: rect.left + rect.width * 0.5,
+    y: rect.top + rect.height * 0.5,
+  };
+}
+
+function positionLabel(label, { x, y, viewportWidth, viewportHeight }) {
+  const maxWidth = Math.min(viewportWidth - 24, viewportWidth < 520 ? 260 : 360);
+  label.style.maxWidth = `${maxWidth}px`;
+  label.style.left = `${Math.min(Math.max(x, 12), viewportWidth - maxWidth - 12)}px`;
+  label.style.top = `${Math.min(Math.max(y, 74), viewportHeight - 168)}px`;
+}
+
+function drawArrow(line, head, from, to, control) {
+  line.setAttribute("d", `M ${from.x} ${from.y} Q ${control.x} ${control.y} ${to.x} ${to.y}`);
+
+  const angle = Math.atan2(to.y - control.y, to.x - control.x);
+  const length = 24;
+  const spread = 0.72;
+  const left = {
+    x: to.x - Math.cos(angle - spread) * length,
+    y: to.y - Math.sin(angle - spread) * length,
+  };
+  const right = {
+    x: to.x - Math.cos(angle + spread) * length,
+    y: to.y - Math.sin(angle + spread) * length,
+  };
+
+  head.setAttribute("d", `M ${left.x} ${left.y} L ${to.x} ${to.y} L ${right.x} ${right.y}`);
 }
 
 async function pickAndPrepareImage(images) {
@@ -293,21 +417,14 @@ function createGateElement() {
     <h1 class="gate-title">Nicole Grundhöfer</h1>
 
     <div class="gate-intro-overlay" data-intro-overlay aria-hidden="true">
-      <div class="gate-intro-note gate-intro-note-start">
-        <span>Schnellstart?</span>
-        <svg viewBox="0 0 180 95" role="presentation" focusable="false">
-          <path class="gate-intro-arrow-line" d="M 8 76 C 52 34, 108 24, 158 16" />
-          <path class="gate-intro-arrow-head" d="M 154 3 L 174 13 L 158 29" />
-        </svg>
-      </div>
-
-      <div class="gate-intro-note gate-intro-note-menu">
-        <span>Guck mal hier</span>
-        <svg viewBox="0 0 190 125" role="presentation" focusable="false">
-          <path class="gate-intro-arrow-line" d="M 12 18 C 64 42, 122 54, 166 101" />
-          <path class="gate-intro-arrow-head" d="M 146 99 L 174 111 L 166 82" />
-        </svg>
-      </div>
+      <svg class="gate-intro-arrows" data-intro-arrows role="presentation" focusable="false">
+        <path class="gate-intro-arrow-line" data-intro-start-line />
+        <path class="gate-intro-arrow-head" data-intro-start-head />
+        <path class="gate-intro-arrow-line" data-intro-menu-line />
+        <path class="gate-intro-arrow-head" data-intro-menu-head />
+      </svg>
+      <div class="gate-intro-note gate-intro-note-start" data-intro-start-label>Schnellstart?</div>
+      <div class="gate-intro-note gate-intro-note-menu" data-intro-menu-label>Guck mal hier</div>
     </div>
 
     <button
@@ -328,13 +445,6 @@ function createGateElement() {
 
     <div class="entry-card">
       <div class="puzzle-area">
-        <div class="puzzle-plane-field" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
         <div
           class="puzzle-board"
           data-puzzle-board

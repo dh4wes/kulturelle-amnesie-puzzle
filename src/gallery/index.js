@@ -46,6 +46,7 @@ export function initGallery({
   wallpaperColor = "#efe8dc",
   wallpaperImages = [],
   galleryImages = [],
+  frame = {},
 }) {
   if (!root) {
     return {
@@ -587,13 +588,7 @@ function buildMuseum(scene, frames, interactables, wallpaper) {
   floor.receiveShadow = true;
   scene.add(floor);
 
-  const wallTexture = createWallpaperTexture(wallpaper);
-  const wallMaterial = new THREE.MeshStandardMaterial({
-    color: "#ffffff",
-    map: wallTexture,
-    roughness: 0.92,
-    metalness: 0,
-  });
+  const wallMaterials = createWallpaperMaterials(wallpaper, width, depth);
 
   const ceilingMaterial = new THREE.MeshStandardMaterial({
     color: "#f8f4ed",
@@ -602,10 +597,10 @@ function buildMuseum(scene, frames, interactables, wallpaper) {
   });
 
   const walls = [
-    createWall(width, ROOM_HEIGHT, [0, ROOM_HEIGHT / 2, -HALF_DEPTH], [0, 0, 0], wallMaterial),
-    createWall(width, ROOM_HEIGHT, [0, ROOM_HEIGHT / 2, HALF_DEPTH], [0, Math.PI, 0], wallMaterial),
-    createWall(depth, ROOM_HEIGHT, [-HALF_WIDTH, ROOM_HEIGHT / 2, 0], [0, Math.PI / 2, 0], wallMaterial),
-    createWall(depth, ROOM_HEIGHT, [HALF_WIDTH, ROOM_HEIGHT / 2, 0], [0, -Math.PI / 2, 0], wallMaterial),
+    createWall(width, ROOM_HEIGHT, [0, ROOM_HEIGHT / 2, -HALF_DEPTH], [0, 0, 0], wallMaterials[0]),
+    createWall(width, ROOM_HEIGHT, [0, ROOM_HEIGHT / 2, HALF_DEPTH], [0, Math.PI, 0], wallMaterials[1]),
+    createWall(depth, ROOM_HEIGHT, [-HALF_WIDTH, ROOM_HEIGHT / 2, 0], [0, Math.PI / 2, 0], wallMaterials[2]),
+    createWall(depth, ROOM_HEIGHT, [HALF_WIDTH, ROOM_HEIGHT / 2, 0], [0, -Math.PI / 2, 0], wallMaterials[3]),
   ];
   walls.forEach((wall) => scene.add(wall));
 
@@ -629,7 +624,7 @@ function buildMuseum(scene, frames, interactables, wallpaper) {
 
   addTrim(scene, width, depth);
   addGlobeSculpture(scene, interactables);
-  addPaintings(scene, frames, interactables);
+  addPaintings(scene, frames, interactables, frame);
 }
 
 function createWall(width, height, position, rotation, material) {
@@ -665,9 +660,51 @@ function addTrim(scene, width, depth) {
   });
 }
 
-function addPaintings(scene, frames, interactables) {
+function normalizeFrameAppearance(value = {}) {
+  const color = typeof value.color === "string" && /^#[0-9a-fA-F]{6}$/.test(value.color) ? value.color : "#6e5335";
+  const width = typeof value.width === "number" && Number.isFinite(value.width) ? value.width : 0.12;
+  const style = ["classic", "slim", "shadowbox"].includes(value.style) ? value.style : "classic";
+  const normalizedWidth = Math.min(Math.max(width, 0.06), 0.24);
+
+  if (style === "slim") {
+    return {
+      color,
+      style,
+      width: Math.min(normalizedWidth, 0.12),
+      matteBorder: 0.035,
+      depth: 0.045,
+      roughness: 0.72,
+      metalness: 0.02,
+    };
+  }
+
+  if (style === "shadowbox") {
+    return {
+      color,
+      style,
+      width: normalizedWidth,
+      matteBorder: 0.055,
+      depth: 0.13,
+      roughness: 0.66,
+      metalness: 0.08,
+    };
+  }
+
+  return {
+    color,
+    style,
+    width: normalizedWidth,
+    matteBorder: 0.045,
+    depth: 0.07,
+    roughness: 0.6,
+    metalness: 0.05,
+  };
+}
+
+function addPaintings(scene, frames, interactables, frameAppearance = {}) {
   const loader = new THREE.TextureLoader();
   loader.setCrossOrigin("anonymous");
+  const frameSettings = normalizeFrameAppearance(frameAppearance);
 
   frames.forEach((frame) => {
     const group = new THREE.Group();
@@ -676,28 +713,35 @@ function addPaintings(scene, frames, interactables) {
 
     const frameWidth = 1.28;
     const frameHeight = 1.76;
-    const frameDepth = 0.07;
-    const matteInset = 0.08;
+    const frameDepth = frameSettings.depth;
+    const frameBorder = frameSettings.width;
+    const matteBorder = frameSettings.matteBorder;
+    const matteDepth = frameSettings.style === "shadowbox" ? frameDepth * 0.62 : frameDepth * 0.45;
+    const artInset = frameBorder * 2 + matteBorder * 2;
 
     const outerFrame = new THREE.Mesh(
       new THREE.BoxGeometry(frameWidth, frameHeight, frameDepth),
-      new THREE.MeshStandardMaterial({ color: "#6e5335", roughness: 0.6, metalness: 0.05 }),
+      new THREE.MeshStandardMaterial({
+        color: frameSettings.color,
+        roughness: frameSettings.roughness,
+        metalness: frameSettings.metalness,
+      }),
     );
     outerFrame.castShadow = true;
     group.add(outerFrame);
 
     const matte = new THREE.Mesh(
-      new THREE.BoxGeometry(frameWidth - matteInset, frameHeight - matteInset, frameDepth * 0.45),
+      new THREE.BoxGeometry(frameWidth - frameBorder * 2, frameHeight - frameBorder * 2, matteDepth),
       new THREE.MeshStandardMaterial({ color: "#f3ecdf", roughness: 0.95 }),
     );
     matte.position.z = frameDepth * 0.2;
     group.add(matte);
 
     const painting = new THREE.Mesh(
-      new THREE.PlaneGeometry(frameWidth - 0.22, frameHeight - 0.22),
+      new THREE.PlaneGeometry(frameWidth - artInset, frameHeight - artInset),
       new THREE.MeshStandardMaterial({ map: artTexture, roughness: 0.92 }),
     );
-    painting.position.z = frameDepth * 0.52;
+    painting.position.z = frameSettings.style === "shadowbox" ? frameDepth * 0.78 : frameDepth * 0.52;
     painting.userData.frame = frame;
     group.add(painting);
     interactables.push(painting);
@@ -837,11 +881,68 @@ function resolveArtworkSrc(imagePath) {
   return `/puzzle-images/${filename}`;
 }
 
+function createWallpaperMaterials(wallpaperSettings, width, depth) {
+  const wallpaper = typeof wallpaperSettings === "string" ? wallpaperSettings : wallpaperSettings?.type;
+  const wallpaperImages = Array.isArray(wallpaperSettings?.images) ? wallpaperSettings.images : [];
+
+  if (wallpaper !== "custom-images") {
+    const wallTexture = createWallpaperTexture(wallpaperSettings);
+    const wallMaterial = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      map: wallTexture,
+      roughness: 0.92,
+      metalness: 0,
+    });
+
+    return [wallMaterial, wallMaterial, wallMaterial, wallMaterial];
+  }
+
+  const wallAspects = [width / ROOM_HEIGHT, width / ROOM_HEIGHT, depth / ROOM_HEIGHT, depth / ROOM_HEIGHT];
+
+  return wallAspects.map((aspect, index) => {
+    const texture = createCustomImageWallTexture(wallpaperSettings, aspect, wallpaperImages[index]);
+
+    return new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      map: texture,
+      roughness: 0.92,
+      metalness: 0,
+    });
+  });
+}
+
+function createCustomImageWallTexture(wallpaperSettings, wallAspect, wallpaperImage) {
+  const wallpaperColor =
+    typeof wallpaperSettings === "object" && typeof wallpaperSettings.color === "string" ? wallpaperSettings.color : "#efe8dc";
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1024, Math.round(1024 * wallAspect));
+  canvas.height = 1024;
+  const context = canvas.getContext("2d");
+
+  drawCustomImageWallpaperBase(context, canvas, wallpaperColor);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+
+  if (wallpaperImage?.src) {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      drawImageCover(context, canvas, image);
+      texture.needsUpdate = true;
+    };
+    image.src = wallpaperImage.src;
+  }
+
+  return texture;
+}
+
 function createWallpaperTexture(wallpaperSettings) {
   const wallpaper = typeof wallpaperSettings === "string" ? wallpaperSettings : wallpaperSettings?.type;
   const wallpaperColor =
     typeof wallpaperSettings === "object" && typeof wallpaperSettings.color === "string" ? wallpaperSettings.color : "#efe8dc";
-  const wallpaperImages = Array.isArray(wallpaperSettings?.images) ? wallpaperSettings.images : [];
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
   canvas.height = 1024;
@@ -867,8 +968,6 @@ function createWallpaperTexture(wallpaperSettings) {
 
   if (wallpaper === "icons") {
     hydrateIconWallpaper(context, canvas, texture);
-  } else if (wallpaper === "custom-images") {
-    hydrateCustomImageWallpaper(context, canvas, texture, wallpaperImages);
   }
 
   return texture;
@@ -884,46 +983,23 @@ function drawCustomImageWallpaperBase(context, canvas, color) {
   }
 }
 
-function hydrateCustomImageWallpaper(context, canvas, texture, wallpaperImages) {
-  const sources = wallpaperImages.map((image) => image?.src).filter(Boolean).slice(0, 4);
+function drawImageCover(context, canvas, image) {
+  const imageAspect = image.naturalWidth / image.naturalHeight;
+  const canvasAspect = canvas.width / canvas.height;
+  const sourceWidth = imageAspect > canvasAspect ? image.naturalHeight * canvasAspect : image.naturalWidth;
+  const sourceHeight = imageAspect > canvasAspect ? image.naturalHeight : image.naturalWidth / canvasAspect;
+  const sourceX = (image.naturalWidth - sourceWidth) / 2;
+  const sourceY = (image.naturalHeight - sourceHeight) / 2;
 
-  if (!sources.length) {
-    return;
-  }
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
 
-  sources.forEach((source, index) => {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.onload = () => {
-      drawWallpaperImageTile(context, canvas, image, index, sources.length);
-      texture.needsUpdate = true;
-    };
-    image.src = source;
-  });
-}
-
-function drawWallpaperImageTile(context, canvas, image, index, count) {
-  const tileSize = count <= 1 ? 132 : 116;
-  const gap = count <= 2 ? 176 : 164;
-  const offsetX = [52, 242, 124, 326][index] ?? 52;
-  const offsetY = [72, 246, 424, 610][index] ?? 72;
-
-  context.save();
-  context.globalAlpha = 0.28;
-
-  for (let y = -tileSize; y < canvas.height + tileSize; y += gap) {
-    for (let x = -tileSize; x < canvas.width + tileSize; x += gap) {
-      const drawX = x + offsetX + ((y / gap) % 2) * 42;
-      const drawY = y + offsetY;
-      context.save();
-      context.translate(drawX + tileSize / 2, drawY + tileSize / 2);
-      context.rotate(((index % 2 === 0 ? -1 : 1) * Math.PI) / 48);
-      context.drawImage(image, -tileSize / 2, -tileSize / 2, tileSize, tileSize);
-      context.restore();
-    }
-  }
-
-  context.restore();
+  const shade = context.createLinearGradient(0, 0, 0, canvas.height);
+  shade.addColorStop(0, "rgba(255, 255, 255, 0.08)");
+  shade.addColorStop(0.55, "rgba(255, 255, 255, 0)");
+  shade.addColorStop(1, "rgba(40, 28, 16, 0.16)");
+  context.fillStyle = shade;
+  context.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawIconWallpaperBase(context, canvas) {
