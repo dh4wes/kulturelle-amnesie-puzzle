@@ -1,5 +1,12 @@
 import * as THREE from "three";
 
+import {
+  AR_MODEL_SOURCE_SRC,
+  AR_MODEL_SRC,
+  MENU_ICON_PATHS,
+  NAVIGATION_ITEMS,
+} from "../config/galleryAssets.js";
+import { SITE_FALLBACK_URL } from "../config/site.js";
 import { createGalleryFrames, stepPlayer } from "./logic.js";
 
 const ROOM = {
@@ -15,22 +22,7 @@ const EYE_HEIGHT = 1.67;
 const CEILING_Y = ROOM_HEIGHT;
 const HALF_WIDTH = (ROOM.maxX - ROOM.minX) * SCALE * 0.5;
 const HALF_DEPTH = (ROOM.maxZ - ROOM.minZ) * SCALE * 0.5;
-const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
-const AR_MODEL_SRC = "/models/Splat_Test_textured_mesh_glb.glb";
-const AR_MODEL_SOURCE_SRC = "/models/Splat_Test_textured_mesh_obj.zip";
 const MINIMAP_MARKER_INSET_PERCENT = 8;
-const NAVIGATION_ITEMS = [
-  { label: "Horch mal", href: "/featured", icon: "/icons/menu-1.png" },
-  { label: "Texte/Gedichte", href: "/works", icon: "/icons/menu-2.png" },
-  { label: "Projekte", href: "/archive", icon: "/icons/menu-3.png" },
-  { label: "Nachrichten", href: "/guestbook", icon: "/icons/menu-4.png" },
-  { label: "begehbare Ausstellung", href: "https://kulturelle-amnesie-puzzle.vercel.app/", icon: "/icons/menu-5.png" },
-  { label: "Kontakt", href: "/kontakt", icon: "/icons/menu-6.png" },
-  { label: "Lebenslauf", href: "/lebenslauf", icon: "/icons/menu-7.png" },
-  { label: "Fragen; des Monats? des Tages?", href: "/fragen", icon: "/icons/menu-8.png" },
-  { label: "Tattoo", href: "/tattoo", icon: "/icons/menu-9.png" },
-];
-const MENU_ICON_PATHS = Array.from({ length: 9 }, (_, index) => `/icons/menu-${index + 1}.png`);
 
 let modelViewerLoadPromise = null;
 

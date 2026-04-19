@@ -1,4 +1,5 @@
-const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
+import { normalizeGalleryWallpaper, SITE_FALLBACK_URL } from "./config/site.js";
+
 const SELECTED_FONT_FAMILY = "SelectedSiteFont";
 const SYSTEM_FONT_STACK =
   'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -55,10 +56,6 @@ function applyBackgroundColor(value) {
   }
 
   document.documentElement.style.setProperty("--site-background", value);
-}
-
-function normalizeGalleryWallpaper(value) {
-  return ["botanical", "damask", "art-nouveau", "icons"].includes(value) ? value : "botanical";
 }
 
 export async function applySiteAppearance() {
