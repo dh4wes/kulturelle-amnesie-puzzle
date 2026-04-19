@@ -705,8 +705,8 @@ function addPaintings(scene, frames, interactables) {
 
 function addBench(scene, interactables) {
   const group = new THREE.Group();
-  group.position.set(0, 0, 2.25);
-  group.rotation.y = Math.PI;
+  group.position.set(ROOM.minX * SCALE + 0.52, 0, 1.55);
+  group.rotation.y = Math.PI / 2;
 
   const wood = new THREE.MeshStandardMaterial({
     color: "#8c5630",
