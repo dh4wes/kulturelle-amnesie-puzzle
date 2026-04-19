@@ -564,7 +564,10 @@ body.gate-locked .page-shell {
     linear-gradient(115deg, rgba(255, 245, 212, 0.06), transparent 42%, rgba(0, 0, 0, 0.1));
   backdrop-filter: blur(5px);
   opacity: 1;
-  transition: opacity 360ms ease, visibility 360ms ease;
+  transition:
+    opacity 1200ms ease,
+    backdrop-filter 1200ms ease,
+    visibility 1200ms ease;
 }
 
 .entry-gate::before {
@@ -713,6 +716,7 @@ body.gate-locked .page-shell {
 }
 
 .entry-gate.is-hiding {
+  backdrop-filter: blur(0);
   opacity: 0;
   visibility: hidden;
 }

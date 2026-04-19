@@ -23,6 +23,11 @@ const CEILING_Y = ROOM_HEIGHT;
 const HALF_WIDTH = (ROOM.maxX - ROOM.minX) * SCALE * 0.5;
 const HALF_DEPTH = (ROOM.maxZ - ROOM.minZ) * SCALE * 0.5;
 const MINIMAP_MARKER_INSET_PERCENT = 8;
+const ENTRY_PLAYER_VIEW = {
+  x: 0,
+  z: ROOM.maxZ - 70,
+  rotation: Math.PI,
+};
 
 let modelViewerLoadPromise = null;
 
@@ -110,9 +115,7 @@ export function initGallery({
   let lastTick = 0;
   let hoveredObject = null;
   let player = {
-    x: 0,
-    z: 620,
-    rotation: Math.PI,
+    ...ENTRY_PLAYER_VIEW,
   };
 
   const resizeRenderer = () => {
@@ -346,8 +349,10 @@ export function initGallery({
 
   return {
     activate() {
+      player = { ...ENTRY_PLAYER_VIEW };
       active = true;
       lastTick = 0;
+      renderFrame();
       viewport.focus();
       if (frameId) {
         cancelAnimationFrame(frameId);

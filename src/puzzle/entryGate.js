@@ -17,7 +17,8 @@ const SESSION_FLAG = "__kulturelle_amnesie_gate_open__";
 const INTRO_OVERLAY_STORAGE_KEY = "__kulturelle_amnesie_intro_overlay_seen__";
 const INTRO_OVERLAY_MS = 7000;
 const MOBILE_MEDIA = "(max-width: 479px)";
-const SOLVED_HOLD_MS = 5000;
+const SOLVED_HOLD_MS = 1200;
+const BYPASS_HOLD_MS = 150;
 const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
 
 export async function initEntryGate(options = {}) {
@@ -118,23 +119,24 @@ export async function initEntryGate(options = {}) {
       });
     };
 
-    const finishGate = () => {
+    const finishGate = ({ holdMs = SOLVED_HOLD_MS } = {}) => {
       solved = true;
       bypassDialog.hidden = true;
       renderBoard();
       announceStatus("Gelöst. Die Galerie öffnet sich gleich.");
 
       setTimeout(() => {
+        unlockPageShell(pageShell);
+        onSolved?.();
         gate.classList.add("is-hiding");
-      }, SOLVED_HOLD_MS);
+      }, holdMs);
 
       gate.addEventListener(
         "transitionend",
-        () => {
+        (event) => {
+          if (event.target !== gate) return;
           root.replaceChildren();
           window[SESSION_FLAG] = true;
-          unlockPageShell(pageShell);
-          onSolved?.();
         },
         { once: true },
       );
@@ -263,7 +265,7 @@ export async function initEntryGate(options = {}) {
     });
     bypassYes.addEventListener("click", () => {
       announceStatus("Galerie wird ohne Lösen geöffnet.");
-      finishGate();
+      finishGate({ holdMs: BYPASS_HOLD_MS });
     });
     bypassNo.addEventListener("click", () => {
       bypassDialog.hidden = true;
