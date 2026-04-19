@@ -16,6 +16,8 @@ const CEILING_Y = ROOM_HEIGHT;
 const HALF_WIDTH = (ROOM.maxX - ROOM.minX) * SCALE * 0.5;
 const HALF_DEPTH = (ROOM.maxZ - ROOM.minZ) * SCALE * 0.5;
 const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
+const AR_MODEL_SRC = "/models/Splat_Test_textured_mesh_glb.glb";
+const AR_MODEL_SOURCE_SRC = "/models/Splat_Test_textured_mesh_obj.zip";
 const NAVIGATION_ITEMS = [
   { label: "Horch mal", href: "/featured", icon: "/icons/menu-1.png" },
   { label: "Texte/Gedichte", href: "/works", icon: "/icons/menu-2.png" },
@@ -28,6 +30,16 @@ const NAVIGATION_ITEMS = [
   { label: "Tattoo", href: "/tattoo", icon: "/icons/menu-9.png" },
 ];
 const MENU_ICON_PATHS = Array.from({ length: 9 }, (_, index) => `/icons/menu-${index + 1}.png`);
+
+let modelViewerLoadPromise = null;
+
+function loadModelViewer() {
+  if (!modelViewerLoadPromise) {
+    modelViewerLoadPromise = import("@google/model-viewer");
+  }
+
+  return modelViewerLoadPromise;
+}
 
 export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   if (!root) {
@@ -51,8 +63,10 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   const modal = root.querySelector("[data-gallery-modal]");
   const modalIcon = root.querySelector("[data-gallery-modal-icon]");
   const modalImage = root.querySelector("[data-gallery-modal-image]");
+  const modalArViewer = root.querySelector("[data-gallery-ar-viewer]");
   const modalTitle = root.querySelector("[data-gallery-modal-title]");
   const modalLink = root.querySelector("[data-gallery-link]");
+  const modalSourceLink = root.querySelector("[data-gallery-source-link]");
   const modalClose = root.querySelector("[data-gallery-close]");
 
   const scene = new THREE.Scene();
@@ -87,7 +101,7 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   let active = false;
   let frameId = 0;
   let lastTick = 0;
-  let hoveredPainting = null;
+  let hoveredObject = null;
   let player = {
     x: 0,
     z: 620,
@@ -166,7 +180,7 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     viewport.focus();
   };
 
-  const openModal = (painting) => {
+  const openPaintingModal = (painting) => {
     const title = `Werk ${painting.userData.frame.id}`;
     const imageSrc = resolveArtworkSrc(painting.userData.frame.image);
     const navigationItem = getNavigationItem(painting.userData.frame);
@@ -174,10 +188,31 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     modalIcon.src = navigationItem.icon;
     modalIcon.alt = "";
     modalTitle.textContent = navigationItem.label;
+    modalImage.hidden = false;
     modalImage.src = imageSrc;
     modalImage.alt = `${title} in Nahansicht`;
+    modalArViewer.hidden = true;
+    modalArViewer.removeAttribute("src");
     modalLink.textContent = `${navigationItem.label} öffnen`;
     modalLink.href = resolveSiteHref(navigationItem.href);
+    modalLink.hidden = false;
+    modalSourceLink.hidden = true;
+    modalClose.focus();
+  };
+
+  const openBenchModal = () => {
+    modal.hidden = false;
+    modalIcon.src = "/icons/menu-5.png";
+    modalIcon.alt = "";
+    modalTitle.textContent = "AR Objekt";
+    modalImage.hidden = true;
+    modalImage.removeAttribute("src");
+    modalArViewer.hidden = false;
+    modalArViewer.setAttribute("src", AR_MODEL_SRC);
+    loadModelViewer();
+    modalLink.hidden = true;
+    modalSourceLink.hidden = false;
+    modalSourceLink.href = AR_MODEL_SOURCE_SRC;
     modalClose.focus();
   };
 
@@ -187,15 +222,17 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     const [hit] = raycaster.intersectObjects(interactables, false);
-    hoveredPainting = hit?.object ?? null;
-    renderer.domElement.style.cursor = hoveredPainting ? "zoom-in" : "default";
+    hoveredObject = hit?.object ?? null;
+    renderer.domElement.style.cursor = hoveredObject ? "zoom-in" : "default";
   };
 
   const handleCanvasClick = (event) => {
     if (!modal.hidden) return;
     updateRaycastTarget(event);
-    if (hoveredPainting) {
-      openModal(hoveredPainting);
+    if (hoveredObject?.userData.kind === "bench") {
+      openBenchModal();
+    } else if (hoveredObject?.userData.frame) {
+      openPaintingModal(hoveredObject);
     }
   };
 
@@ -343,7 +380,20 @@ function createGalleryMarkup() {
             <span id="gallery-modal-title" data-gallery-modal-title></span>
           </h2>
           <img class="gallery-modal-artwork" data-gallery-modal-image alt="" />
+          <model-viewer
+            class="gallery-ar-viewer"
+            data-gallery-ar-viewer
+            alt="AR Objekt"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            camera-controls
+            auto-rotate
+            shadow-intensity="0.85"
+            exposure="0.95"
+            hidden
+          ></model-viewer>
           <a class="gallery-site-link" data-gallery-link href="${resolveSiteHref(NAVIGATION_ITEMS[0].href)}">${NAVIGATION_ITEMS[0].label} öffnen</a>
+          <a class="gallery-site-link gallery-source-link" data-gallery-source-link href="${AR_MODEL_SOURCE_SRC}" download hidden>OBJ Quelle herunterladen</a>
         </div>
       </div>
     </section>
@@ -545,6 +595,7 @@ function buildMuseum(scene, frames, interactables, wallpaper) {
   scene.add(ceiling);
 
   addTrim(scene, width, depth);
+  addBench(scene, interactables);
   addPaintings(scene, frames, interactables);
 }
 
@@ -639,6 +690,76 @@ function addPaintings(scene, frames, interactables) {
   });
 }
 
+function addBench(scene, interactables) {
+  const group = new THREE.Group();
+  group.position.set(0, 0, 2.25);
+  group.rotation.y = Math.PI;
+
+  const wood = new THREE.MeshStandardMaterial({
+    color: "#8c5630",
+    roughness: 0.58,
+    metalness: 0.03,
+  });
+  const darkWood = new THREE.MeshStandardMaterial({
+    color: "#5d381f",
+    roughness: 0.64,
+    metalness: 0.02,
+  });
+  const metal = new THREE.MeshStandardMaterial({
+    color: "#24211f",
+    roughness: 0.46,
+    metalness: 0.45,
+  });
+
+  const makePart = (geometry, material, position, interactive = false) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(...position);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    if (interactive) {
+      mesh.userData.kind = "bench";
+      interactables.push(mesh);
+    }
+    group.add(mesh);
+    return mesh;
+  };
+
+  makePart(new THREE.BoxGeometry(2.35, 0.16, 0.68), wood, [0, 0.52, 0], true);
+  makePart(new THREE.BoxGeometry(2.42, 0.64, 0.14), darkWood, [0, 0.88, 0.36], true);
+  makePart(new THREE.BoxGeometry(2.28, 0.08, 0.08), darkWood, [0, 0.64, -0.34], true);
+
+  const legGeometry = new THREE.BoxGeometry(0.1, 0.48, 0.1);
+  [
+    [-0.96, 0.25, -0.22],
+    [0.96, 0.25, -0.22],
+    [-0.96, 0.25, 0.22],
+    [0.96, 0.25, 0.22],
+  ].forEach((position) => makePart(legGeometry, metal, position));
+
+  const footGeometry = new THREE.BoxGeometry(0.28, 0.05, 0.14);
+  [
+    [-0.96, 0.03, -0.22],
+    [0.96, 0.03, -0.22],
+    [-0.96, 0.03, 0.22],
+    [0.96, 0.03, 0.22],
+  ].forEach((position) => makePart(footGeometry, metal, position));
+
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.75, 1.15),
+    new THREE.MeshBasicMaterial({
+      color: "#3a2618",
+      transparent: true,
+      opacity: 0.11,
+      depthWrite: false,
+    }),
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.012;
+  group.add(shadow);
+
+  scene.add(group);
+}
+
 function positionPaintingGroup(group, frame) {
   const x = frame.x * SCALE;
   const y = frame.y * SCALE;
@@ -707,29 +828,29 @@ function createWallpaperTexture(wallpaper) {
 
 function drawIconWallpaperBase(context, canvas) {
   const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-  background.addColorStop(0, "#efe4d3");
-  background.addColorStop(0.52, "#dfd0bb");
-  background.addColorStop(1, "#efe7d8");
+  background.addColorStop(0, "#f1eadf");
+  background.addColorStop(0.46, "#e8dccb");
+  background.addColorStop(1, "#f3ecdf");
   context.fillStyle = background;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  context.strokeStyle = "rgba(99, 74, 49, 0.13)";
-  context.lineWidth = 2;
-
-  for (let y = 72; y < canvas.height; y += 128) {
-    for (let x = 64; x < canvas.width; x += 128) {
-      context.beginPath();
-      context.arc(x, y, 36, 0, Math.PI * 2);
-      context.stroke();
-      context.beginPath();
-      context.arc(x, y, 19, 0, Math.PI * 2);
-      context.stroke();
-    }
+  context.fillStyle = "rgba(116, 91, 61, 0.035)";
+  for (let speck = 0; speck < 1400; speck += 1) {
+    const x = (speck * 193) % canvas.width;
+    const y = (speck * 389) % canvas.height;
+    const size = 0.6 + ((speck * 17) % 13) / 10;
+    context.fillRect(x, y, size, size);
   }
 
-  context.fillStyle = "rgba(255, 250, 239, 0.22)";
-  for (let y = 0; y < canvas.height; y += 128) {
-    context.fillRect(0, y, canvas.width, 1.5);
+  context.strokeStyle = "rgba(255, 253, 248, 0.18)";
+  context.lineWidth = 1;
+  for (let y = 0; y < canvas.height; y += 96) {
+    context.beginPath();
+    context.moveTo(0, y + ((y / 96) % 2) * 9);
+    for (let x = 0; x <= canvas.width; x += 128) {
+      context.lineTo(x, y + Math.sin(x * 0.012 + y * 0.018) * 4);
+    }
+    context.stroke();
   }
 }
 
@@ -909,7 +1030,7 @@ function createFloorTexture() {
 
   const plankHeight = 132;
   const plankLength = 620;
-  const colors = ["#8f5b32", "#a36b3d", "#754826", "#b27642", "#986037", "#6f4324"];
+  const colors = ["#8b5a34", "#9a653c", "#734727", "#aa7144", "#8f5c35", "#684225", "#a46a3d"];
 
   context.fillStyle = "#7b4b2b";
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -930,7 +1051,7 @@ function createFloorTexture() {
       context.fillRect(x, y, plankLength, plankHeight);
 
       context.strokeStyle = "rgba(37, 21, 12, 0.58)";
-      context.lineWidth = 5;
+      context.lineWidth = 4;
       context.strokeRect(x + 1, y + 1, plankLength - 2, plankHeight - 2);
 
       drawWoodGrain(context, x, y, plankLength, plankHeight, row);
@@ -958,36 +1079,41 @@ function drawWoodGrain(context, x, y, width, height, seed) {
   context.rect(x + 6, y + 6, width - 12, height - 12);
   context.clip();
 
-  for (let line = 0; line < 13; line += 1) {
-    const lineY = y + 18 + ((line * 19 + seed * 7) % Math.max(1, height - 28));
+  context.globalCompositeOperation = "multiply";
+  context.fillStyle = "rgba(44, 24, 12, 0.025)";
+  for (let pore = 0; pore < 90; pore += 1) {
+    const poreX = x + ((pore * 47 + seed * 31) % Math.max(1, width));
+    const poreY = y + ((pore * 19 + seed * 43) % Math.max(1, height));
+    const poreWidth = 8 + ((pore * 7 + seed) % 26);
+    context.fillRect(poreX, poreY, poreWidth, 1);
+  }
+
+  for (let line = 0; line < 18; line += 1) {
+    const lineY = y + 12 + ((line * 13 + seed * 11) % Math.max(1, height - 24));
     context.beginPath();
     context.moveTo(x + 18, lineY);
 
-    for (let step = 1; step <= 6; step += 1) {
-      const controlX = x + step * (width / 6) - width / 12;
-      const controlY = lineY + Math.sin((step + seed + line) * 1.7) * 9;
-      const nextX = x + step * (width / 6);
-      const nextY = lineY + Math.cos((step * 1.3 + seed + line) * 1.1) * 7;
+    for (let step = 1; step <= 9; step += 1) {
+      const controlX = x + step * (width / 9) - width / 18;
+      const controlY = lineY + Math.sin((step + seed + line) * 1.23) * 5 + Math.cos((seed + line) * 0.71) * 2;
+      const nextX = x + step * (width / 9);
+      const nextY = lineY + Math.cos((step * 1.9 + seed + line) * 0.83) * 4;
       context.quadraticCurveTo(controlX, controlY, nextX, nextY);
     }
 
-    context.strokeStyle = line % 3 === 0 ? "rgba(255, 218, 160, 0.16)" : "rgba(42, 24, 13, 0.2)";
-    context.lineWidth = line % 3 === 0 ? 2 : 1.2;
+    context.strokeStyle = line % 4 === 0 ? "rgba(255, 218, 160, 0.1)" : "rgba(48, 27, 14, 0.18)";
+    context.lineWidth = line % 4 === 0 ? 1.4 : 0.9;
     context.stroke();
   }
 
-  for (let knot = 0; knot < 2; knot += 1) {
-    const knotX = x + width * (0.28 + ((seed + knot * 2) % 5) * 0.11);
-    const knotY = y + height * (0.32 + ((seed + knot * 3) % 4) * 0.12);
+  context.globalCompositeOperation = "screen";
+  context.strokeStyle = "rgba(255, 229, 185, 0.1)";
+  context.lineWidth = 1;
+  for (let highlight = 0; highlight < 5; highlight += 1) {
+    const highlightY = y + 18 + ((highlight * 23 + seed * 17) % Math.max(1, height - 36));
     context.beginPath();
-    context.ellipse(knotX, knotY, 34, 10, 0.18 * (seed + knot), 0, Math.PI * 2);
-    context.strokeStyle = "rgba(42, 24, 13, 0.28)";
-    context.lineWidth = 3;
-    context.stroke();
-    context.beginPath();
-    context.ellipse(knotX, knotY, 15, 4, 0.18 * (seed + knot), 0, Math.PI * 2);
-    context.strokeStyle = "rgba(255, 220, 166, 0.18)";
-    context.lineWidth = 2;
+    context.moveTo(x + 24, highlightY);
+    context.lineTo(x + width - 24, highlightY + Math.sin((seed + highlight) * 1.4) * 3);
     context.stroke();
   }
 
