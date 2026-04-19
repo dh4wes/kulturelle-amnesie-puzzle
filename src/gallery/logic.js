@@ -1,5 +1,5 @@
-const TURN_SPEED = Math.PI * 0.0014;
-const MOVE_SPEED = 0.42;
+const TURN_SPEED = Math.PI * 0.00095;
+const MOVE_SPEED = 0.28;
 const FRAME_CENTER_Y = 210;
 
 export function clampPlayerPosition(position, room) {
