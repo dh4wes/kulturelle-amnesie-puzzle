@@ -601,10 +601,11 @@ body.gate-locked .page-shell {
   cursor: pointer;
   box-shadow:
     0 10px 22px rgba(0, 0, 0, 0.24),
-    0 0 24px rgba(255, 245, 173, 0.32);
+    0 0 34px rgba(255, 245, 173, 0.42),
+    0 0 68px rgba(255, 214, 107, 0.16);
   animation:
-    gateStarEnter 900ms cubic-bezier(0.2, 0.86, 0.24, 1.08) 620ms both,
-    activeControlGlow 2.4s ease-in-out 1.6s infinite;
+    gateStarEnter 1.35s cubic-bezier(0.17, 0.9, 0.18, 1.18) 480ms both,
+    activeControlGlow 2.05s ease-in-out 1.72s infinite;
 }
 
 .gate-title {
@@ -842,11 +843,12 @@ body.gate-locked .page-shell {
   box-shadow:
     0 0 0 1px rgba(255, 245, 173, 0.06),
     0 12px 28px rgba(0, 0, 0, 0.28),
-    0 0 28px rgba(255, 245, 173, 0.16);
+    0 0 34px rgba(255, 245, 173, 0.26),
+    0 0 72px rgba(255, 214, 107, 0.12);
   cursor: pointer;
   animation:
-    gateWaveEnter 900ms cubic-bezier(0.2, 0.86, 0.24, 1.08) 820ms both,
-    activeControlGlow 2.4s ease-in-out 1.75s infinite;
+    gateWaveEnter 1.35s cubic-bezier(0.17, 0.9, 0.18, 1.18) 640ms both,
+    activeControlGlow 2.05s ease-in-out 1.86s infinite;
 }
 
 .gate-info-wave span {
@@ -924,26 +926,50 @@ body.gate-locked .page-shell {
 }
 
 @keyframes gateStarEnter {
-  from {
+  0% {
     opacity: 0;
-    transform: translate(3.2rem, -2rem) scale(0.72);
+    transform: translate(7rem, -5rem) scale(0.28) rotate(26deg);
+    filter: blur(10px);
   }
 
-  to {
+  54% {
     opacity: 1;
-    transform: translate(0, 0) scale(1);
+    transform: translate(-0.55rem, 0.42rem) scale(1.18) rotate(-8deg);
+    filter: blur(0);
+  }
+
+  74% {
+    transform: translate(0.18rem, -0.12rem) scale(0.96) rotate(3deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0);
+    filter: blur(0);
   }
 }
 
 @keyframes gateWaveEnter {
-  from {
+  0% {
     opacity: 0;
-    transform: translate(3.4rem, 2.4rem) scale(0.78);
+    transform: translate(8rem, 5.2rem) scale(0.34) rotate(-10deg);
+    filter: blur(12px);
   }
 
-  to {
+  56% {
     opacity: 1;
-    transform: translate(0, 0) scale(1);
+    transform: translate(-0.72rem, -0.48rem) scale(1.16) rotate(4deg);
+    filter: blur(0);
+  }
+
+  76% {
+    transform: translate(0.24rem, 0.12rem) scale(0.97) rotate(-2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0);
+    filter: blur(0);
   }
 }
 
@@ -951,16 +977,18 @@ body.gate-locked .page-shell {
   0%,
   100% {
     box-shadow:
-      0 0 0 1px rgba(255, 245, 173, 0.08),
+      0 0 0 1px rgba(255, 245, 173, 0.12),
       0 12px 28px rgba(0, 0, 0, 0.28),
-      0 0 22px rgba(255, 245, 173, 0.18);
+      0 0 28px rgba(255, 245, 173, 0.28),
+      0 0 56px rgba(255, 214, 107, 0.12);
   }
 
   50% {
     box-shadow:
-      0 0 0 1px rgba(255, 245, 173, 0.2),
-      0 14px 32px rgba(0, 0, 0, 0.3),
-      0 0 38px rgba(255, 245, 173, 0.36);
+      0 0 0 1px rgba(255, 245, 173, 0.34),
+      0 16px 36px rgba(0, 0, 0, 0.34),
+      0 0 48px rgba(255, 245, 173, 0.52),
+      0 0 92px rgba(255, 214, 107, 0.22);
   }
 }
 
