@@ -90,7 +90,7 @@ test("gallery frame layout assigns positions to all available images", () => {
 
   assert.equal(frames.length, 3);
   assert.equal(frames[0].wall, "front");
-  assert.equal(frames[0].y, 235);
+  assert.equal(frames[0].y, 210);
   assert.equal(frames[2].wall, "left");
   assert.equal(frames[1].label, "two.jpg");
 });
