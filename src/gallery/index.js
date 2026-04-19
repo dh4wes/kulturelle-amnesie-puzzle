@@ -15,6 +15,14 @@ const ROOM = {
   minZ: -800,
   maxZ: 800,
 };
+const WALL_COLLISION_INSET = 115;
+const WALKABLE_ROOM = {
+  minX: ROOM.minX + WALL_COLLISION_INSET,
+  maxX: ROOM.maxX - WALL_COLLISION_INSET,
+  minZ: ROOM.minZ + WALL_COLLISION_INSET,
+  maxZ: ROOM.maxZ - WALL_COLLISION_INSET,
+};
+const WALL_CARD_TRIGGER_RANGE = 145;
 
 const SCALE = 0.01;
 const ROOM_HEIGHT = 8.6;
@@ -161,7 +169,12 @@ export function initGallery({
     lastTick = time;
 
     if (modal.hidden) {
-      player = stepPlayer(player, input, delta, ROOM);
+      const nextPlayer = stepPlayer(player, input, delta, WALKABLE_ROOM);
+      const boundaryFrame = getBoundaryFrameTrigger(nextPlayer, input, frames);
+      player = nextPlayer;
+      if (boundaryFrame) {
+        openPaintingModal(boundaryFrame);
+      }
     }
 
     renderFrame();
@@ -196,16 +209,27 @@ export function initGallery({
     viewport.focus();
   };
 
-  const openPaintingModal = (painting) => {
-    const title = `Werk ${painting.userData.frame.id}`;
-    const imageSrc = resolveArtworkSrc(painting.userData.frame.image);
-    const navigationItem = getNavigationItem(painting.userData.frame);
+  const resetMovement = () => {
+    input.forward = false;
+    input.backward = false;
+    input.left = false;
+    input.right = false;
+    input.turnLeft = false;
+    input.turnRight = false;
+    resetJoystick();
+  };
+
+  const openPaintingModal = (paintingOrFrame) => {
+    const frame = paintingOrFrame.userData?.frame ?? paintingOrFrame;
+    const title = `Werk ${frame.id}`;
+    const imageSrc = resolveArtworkSrc(frame.image);
+    const navigationItem = getNavigationItem(frame);
     modal.hidden = false;
     modalIcon.src = navigationItem.icon;
     modalIcon.alt = "";
-    modalTitle.textContent = painting.userData.frame.card?.title || navigationItem.label;
-    modalBody.textContent = painting.userData.frame.card?.body || "";
-    modalBody.hidden = !painting.userData.frame.card?.body;
+    modalTitle.textContent = frame.card?.title || navigationItem.label;
+    modalBody.textContent = frame.card?.body || "";
+    modalBody.hidden = !frame.card?.body;
     modalImage.hidden = false;
     modalImage.src = imageSrc;
     modalImage.alt = `${title} in Nahansicht`;
@@ -215,6 +239,7 @@ export function initGallery({
     modalLink.href = resolveSiteHref(navigationItem.href);
     modalLink.hidden = false;
     modalSourceLink.hidden = true;
+    resetMovement();
     modalClose.focus();
   };
 
@@ -523,6 +548,57 @@ function getPlayerViewForFrame(frame) {
   }
 
   return { x: 0, z: 0, rotation: 0 };
+}
+
+function getBoundaryFrameTrigger(player, input, frames) {
+  if (!hasMovementInput(input)) return null;
+
+  if (player.z <= WALKABLE_ROOM.minZ) {
+    return getNearestFrameOnWall(frames, "front", player.x);
+  }
+
+  if (player.z >= WALKABLE_ROOM.maxZ) {
+    return getNearestFrameOnWall(frames, "back", player.x);
+  }
+
+  if (player.x <= WALKABLE_ROOM.minX) {
+    return getNearestFrameOnWall(frames, "left", player.z);
+  }
+
+  if (player.x >= WALKABLE_ROOM.maxX) {
+    return getNearestFrameOnWall(frames, "right", player.z);
+  }
+
+  return null;
+}
+
+function hasMovementInput(input) {
+  return Boolean(
+    input.forward ||
+      input.backward ||
+      input.left ||
+      input.right ||
+      Math.abs(input.moveAxisX) > 0.05 ||
+      Math.abs(input.moveAxisY) > 0.05,
+  );
+}
+
+function getNearestFrameOnWall(frames, wall, axisValue) {
+  let nearestFrame = null;
+  let nearestDistance = Infinity;
+
+  frames
+    .filter((frame) => frame.wall === wall)
+    .forEach((frame) => {
+      const frameAxisValue = wall === "front" || wall === "back" ? frame.x : frame.z;
+      const distance = Math.abs(frameAxisValue - axisValue);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestFrame = frame;
+      }
+    });
+
+  return nearestDistance <= WALL_CARD_TRIGGER_RANGE ? nearestFrame : null;
 }
 
 function updateMiniMapPlayer(player, mapPlayer) {
