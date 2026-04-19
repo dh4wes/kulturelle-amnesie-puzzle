@@ -791,115 +791,119 @@ body.gate-locked .page-shell {
   animation: puzzleFloat 5.6s ease-in-out infinite;
 }
 
-.puzzle-symbol-field {
+.puzzle-plane-field {
   position: absolute;
-  inset: clamp(-4.5rem, -8vw, -2rem);
+  inset: clamp(-5rem, -9vw, -2.2rem);
   z-index: 0;
   pointer-events: none;
   transform-style: preserve-3d;
 }
 
-.puzzle-symbol-field span {
+.puzzle-plane-field span {
   position: absolute;
-  left: var(--symbol-left);
-  top: var(--symbol-top);
-  display: grid;
-  width: clamp(1.9rem, 5vw, 3.2rem);
-  height: clamp(1.9rem, 5vw, 3.2rem);
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 245, 173, 0.2);
-  background: rgba(21, 16, 20, 0.34);
-  color: rgba(255, 245, 173, 0.82);
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 3.2vw, 2rem);
-  line-height: 1;
-  opacity: 0.78;
-  filter: blur(var(--symbol-blur, 0));
+  left: var(--plane-left);
+  top: var(--plane-top);
+  width: var(--plane-width);
+  aspect-ratio: var(--plane-ratio);
+  border-radius: clamp(0.8rem, 2vw, 1.6rem);
+  border: 1px solid rgba(255, 245, 173, var(--plane-border, 0.12));
+  background:
+    linear-gradient(135deg, rgba(255, 245, 173, var(--plane-light, 0.12)), transparent 58%),
+    rgba(255, 244, 228, var(--plane-fill, 0.055));
+  opacity: var(--plane-opacity, 0.72);
+  filter: blur(var(--plane-blur, 0));
   box-shadow:
-    0 18px 38px rgba(0, 0, 0, 0.18),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    0 24px 60px rgba(0, 0, 0, var(--plane-shadow, 0.18)),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.045);
   transform:
-    translate3d(-50%, -50%, var(--symbol-z))
-    rotate(var(--symbol-rotate));
-  animation: symbolFloat var(--symbol-duration) ease-in-out infinite;
-  animation-delay: var(--symbol-delay);
+    translate3d(-50%, -50%, var(--plane-z))
+    rotateX(var(--plane-tilt-x))
+    rotateY(var(--plane-tilt-y))
+    rotateZ(var(--plane-rotate));
+  animation: planeDrift var(--plane-duration) ease-in-out infinite;
+  animation-delay: var(--plane-delay);
 }
 
-.puzzle-symbol-field span:nth-child(1) {
-  --symbol-left: 3%;
-  --symbol-top: 14%;
-  --symbol-z: 72px;
-  --symbol-rotate: -14deg;
-  --symbol-duration: 6.8s;
-  --symbol-delay: -1.2s;
+.puzzle-plane-field span:nth-child(1) {
+  --plane-left: 17%;
+  --plane-top: 20%;
+  --plane-width: min(34vw, 230px);
+  --plane-ratio: 1.55;
+  --plane-z: -120px;
+  --plane-tilt-x: 62deg;
+  --plane-tilt-y: -18deg;
+  --plane-rotate: -12deg;
+  --plane-duration: 9.4s;
+  --plane-delay: -3.6s;
+  --plane-blur: 1.1px;
+  --plane-opacity: 0.5;
+  --plane-low-opacity: 0.36;
 }
 
-.puzzle-symbol-field span:nth-child(2) {
-  --symbol-left: 94%;
-  --symbol-top: 15%;
-  --symbol-z: -48px;
-  --symbol-rotate: 18deg;
-  --symbol-duration: 8.4s;
-  --symbol-delay: -4.8s;
-  --symbol-blur: 0.8px;
+.puzzle-plane-field span:nth-child(2) {
+  --plane-left: 83%;
+  --plane-top: 25%;
+  --plane-width: min(30vw, 200px);
+  --plane-ratio: 1.25;
+  --plane-z: 82px;
+  --plane-tilt-x: 54deg;
+  --plane-tilt-y: 16deg;
+  --plane-rotate: 14deg;
+  --plane-duration: 7.8s;
+  --plane-delay: -1.4s;
+  --plane-fill: 0.075;
+  --plane-light: 0.16;
+  --plane-shadow: 0.24;
+  --plane-low-opacity: 0.52;
 }
 
-.puzzle-symbol-field span:nth-child(3) {
-  --symbol-left: 7%;
-  --symbol-top: 48%;
-  --symbol-z: -92px;
-  --symbol-rotate: 8deg;
-  --symbol-duration: 7.6s;
-  --symbol-delay: -3.3s;
-  --symbol-blur: 1.1px;
+.puzzle-plane-field span:nth-child(3) {
+  --plane-left: 12%;
+  --plane-top: 76%;
+  --plane-width: min(38vw, 260px);
+  --plane-ratio: 1.95;
+  --plane-z: 48px;
+  --plane-tilt-x: 68deg;
+  --plane-tilt-y: 12deg;
+  --plane-rotate: 10deg;
+  --plane-duration: 8.6s;
+  --plane-delay: -5.2s;
+  --plane-fill: 0.07;
+  --plane-low-opacity: 0.5;
 }
 
-.puzzle-symbol-field span:nth-child(4) {
-  --symbol-left: 98%;
-  --symbol-top: 50%;
-  --symbol-z: 54px;
-  --symbol-rotate: -8deg;
-  --symbol-duration: 7.2s;
-  --symbol-delay: -2.1s;
+.puzzle-plane-field span:nth-child(4) {
+  --plane-left: 88%;
+  --plane-top: 78%;
+  --plane-width: min(36vw, 240px);
+  --plane-ratio: 1.45;
+  --plane-z: -88px;
+  --plane-tilt-x: 58deg;
+  --plane-tilt-y: -22deg;
+  --plane-rotate: -18deg;
+  --plane-duration: 10.2s;
+  --plane-delay: -6.4s;
+  --plane-blur: 0.9px;
+  --plane-opacity: 0.54;
+  --plane-low-opacity: 0.38;
 }
 
-.puzzle-symbol-field span:nth-child(5) {
-  --symbol-left: 4%;
-  --symbol-top: 86%;
-  --symbol-z: 36px;
-  --symbol-rotate: 22deg;
-  --symbol-duration: 8.8s;
-  --symbol-delay: -5.6s;
-}
-
-.puzzle-symbol-field span:nth-child(6) {
-  --symbol-left: 91%;
-  --symbol-top: 88%;
-  --symbol-z: -72px;
-  --symbol-rotate: -18deg;
-  --symbol-duration: 6.4s;
-  --symbol-delay: -0.7s;
-  --symbol-blur: 0.9px;
-}
-
-.puzzle-symbol-field span:nth-child(7) {
-  --symbol-left: 50%;
-  --symbol-top: 4%;
-  --symbol-z: 108px;
-  --symbol-rotate: 0deg;
-  --symbol-duration: 7.9s;
-  --symbol-delay: -3.9s;
-}
-
-.puzzle-symbol-field span:nth-child(8) {
-  --symbol-left: 51%;
-  --symbol-top: 98%;
-  --symbol-z: -118px;
-  --symbol-rotate: 16deg;
-  --symbol-duration: 9.2s;
-  --symbol-delay: -6.2s;
-  --symbol-blur: 1.3px;
+.puzzle-plane-field span:nth-child(5) {
+  --plane-left: 50%;
+  --plane-top: 50%;
+  --plane-width: min(82vw, 620px);
+  --plane-ratio: 2.8;
+  --plane-z: -180px;
+  --plane-tilt-x: 72deg;
+  --plane-tilt-y: 0deg;
+  --plane-rotate: 0deg;
+  --plane-duration: 12s;
+  --plane-delay: -8s;
+  --plane-blur: 1.6px;
+  --plane-opacity: 0.34;
+  --plane-low-opacity: 0.22;
+  --plane-border: 0.08;
+  --plane-fill: 0.04;
 }
 
 .puzzle-board::after {
@@ -1065,22 +1069,26 @@ body.gate-locked .page-shell {
   }
 }
 
-@keyframes symbolFloat {
+@keyframes planeDrift {
   0%,
   100% {
-    opacity: 0.58;
+    opacity: var(--plane-low-opacity, 0.48);
     transform:
-      translate3d(-50%, -50%, var(--symbol-z))
-      translateY(-0.25rem)
-      rotate(var(--symbol-rotate));
+      translate3d(-50%, -50%, var(--plane-z))
+      translate(-0.4rem, -0.25rem)
+      rotateX(var(--plane-tilt-x))
+      rotateY(var(--plane-tilt-y))
+      rotateZ(var(--plane-rotate));
   }
 
   50% {
-    opacity: 0.92;
+    opacity: var(--plane-opacity, 0.72);
     transform:
-      translate3d(-50%, -50%, var(--symbol-z))
-      translateY(0.55rem)
-      rotate(calc(var(--symbol-rotate) + 10deg));
+      translate3d(-50%, -50%, var(--plane-z))
+      translate(0.45rem, 0.6rem)
+      rotateX(calc(var(--plane-tilt-x) + 4deg))
+      rotateY(calc(var(--plane-tilt-y) - 3deg))
+      rotateZ(calc(var(--plane-rotate) + 2deg));
   }
 }
 

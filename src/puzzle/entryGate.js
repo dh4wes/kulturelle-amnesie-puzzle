@@ -328,15 +328,12 @@ function createGateElement() {
 
     <div class="entry-card">
       <div class="puzzle-area">
-        <div class="puzzle-symbol-field" aria-hidden="true">
-          <span>✦</span>
-          <span>◇</span>
-          <span>+</span>
-          <span>×</span>
-          <span>✧</span>
-          <span>□</span>
-          <span>•</span>
-          <span>△</span>
+        <div class="puzzle-plane-field" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
         <div
           class="puzzle-board"
