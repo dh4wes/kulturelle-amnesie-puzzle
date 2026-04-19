@@ -705,7 +705,7 @@ function addPaintings(scene, frames, interactables) {
 
 function addGlobeSculpture(scene, interactables) {
   const group = new THREE.Group();
-  group.position.set(ROOM.minX * SCALE + 0.72, 0, 1.55);
+  group.position.set(ROOM.minX * SCALE + 1.05, 0, 1.55);
 
   const stone = new THREE.MeshStandardMaterial({
     color: "#d8c9b2",
