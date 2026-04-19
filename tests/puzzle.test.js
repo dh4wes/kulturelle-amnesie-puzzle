@@ -60,6 +60,27 @@ test("gallery movement stays inside the room bounds", () => {
   assert.equal(next.z, 10);
 });
 
+test("gallery horizontal turn controls match the facing direction", () => {
+  const room = { minX: -10, maxX: 10, minZ: -10, maxZ: 10 };
+  const start = { x: 0, z: 0, rotation: Math.PI };
+
+  const right = stepPlayer(
+    start,
+    { forward: false, backward: false, left: false, right: false, turnLeft: false, turnRight: true },
+    100,
+    room,
+  );
+  const left = stepPlayer(
+    start,
+    { forward: false, backward: false, left: false, right: false, turnLeft: true, turnRight: false },
+    100,
+    room,
+  );
+
+  assert.ok(right.rotation < start.rotation);
+  assert.ok(left.rotation > start.rotation);
+});
+
 test("gallery frame layout assigns positions to all available images", () => {
   const frames = createGalleryFrames([
     "public/puzzle-images/one.jpg",

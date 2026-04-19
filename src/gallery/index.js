@@ -27,7 +27,7 @@ const NAVIGATION_ITEMS = [
   { label: "Tattoo", href: "/tattoo" },
 ];
 
-export function initGallery({ root, images = [] }) {
+export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   if (!root) {
     return {
       activate() {},
@@ -114,7 +114,7 @@ export function initGallery({ root, images = [] }) {
   };
 
   buildMiniMapMarkers(frames, mapTrack, mapList, moveToFrame);
-  buildMuseum(scene, frames, interactables);
+  buildMuseum(scene, frames, interactables, wallpaper);
   syncCamera(camera, player);
   renderFrame();
 
@@ -437,7 +437,7 @@ function roomZToPercent(z) {
   return ((clampedZ - ROOM.minZ) / (ROOM.maxZ - ROOM.minZ)) * 100;
 }
 
-function buildMuseum(scene, frames, interactables) {
+function buildMuseum(scene, frames, interactables, wallpaper) {
   const width = HALF_WIDTH * 2;
   const depth = HALF_DEPTH * 2;
 
@@ -473,8 +473,10 @@ function buildMuseum(scene, frames, interactables) {
   floor.receiveShadow = true;
   scene.add(floor);
 
+  const wallTexture = createWallpaperTexture(wallpaper);
   const wallMaterial = new THREE.MeshStandardMaterial({
-    color: "#f3ece2",
+    color: "#ffffff",
+    map: wallTexture,
     roughness: 0.92,
     metalness: 0,
   });
@@ -643,28 +645,246 @@ function resolveArtworkSrc(imagePath) {
   return `/puzzle-images/${filename}`;
 }
 
-function createFloorTexture() {
+function createWallpaperTexture(wallpaper) {
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
   canvas.height = 1024;
   const context = canvas.getContext("2d");
 
-  context.fillStyle = "#c9ae86";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  for (let row = 0; row < 8; row += 1) {
-    for (let col = 0; col < 8; col += 1) {
-      context.fillStyle = (row + col) % 2 === 0 ? "#b28e62" : "#c39d71";
-      context.fillRect(col * 128, row * 128, 128, 128);
-      context.strokeStyle = "rgba(88, 58, 30, 0.22)";
-      context.strokeRect(col * 128, row * 128, 128, 128);
-    }
+  if (wallpaper === "damask") {
+    drawDamaskWallpaper(context, canvas);
+  } else if (wallpaper === "art-nouveau") {
+    drawArtNouveauWallpaper(context, canvas);
+  } else {
+    drawBotanicalWallpaper(context, canvas);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(3.5, 5);
+  texture.repeat.set(2.4, 1.8);
   return texture;
+}
+
+function drawBotanicalWallpaper(context, canvas) {
+  context.fillStyle = "#efe8dc";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 48; y < canvas.height; y += 160) {
+    for (let x = 48; x < canvas.width; x += 144) {
+      const shift = ((x + y) / 48) % 2 === 0 ? 0 : 42;
+      drawBotanicalSprig(context, x + shift, y);
+    }
+  }
+
+  context.fillStyle = "rgba(91, 74, 54, 0.06)";
+  for (let dot = 0; dot < 220; dot += 1) {
+    const x = (dot * 97) % canvas.width;
+    const y = (dot * 173) % canvas.height;
+    context.fillRect(x, y, 1.5, 1.5);
+  }
+}
+
+function drawBotanicalSprig(context, x, y) {
+  context.save();
+  context.translate(x, y);
+  context.strokeStyle = "rgba(65, 76, 51, 0.26)";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(0, 54);
+  context.bezierCurveTo(18, 22, -12, 12, 8, -28);
+  context.stroke();
+
+  for (let leaf = 0; leaf < 5; leaf += 1) {
+    const leafY = 38 - leaf * 18;
+    const side = leaf % 2 === 0 ? 1 : -1;
+    context.beginPath();
+    context.ellipse(side * 13, leafY, 16, 5.5, side * -0.45, 0, Math.PI * 2);
+    context.stroke();
+  }
+
+  context.restore();
+}
+
+function drawDamaskWallpaper(context, canvas) {
+  context.fillStyle = "#2d4638";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < canvas.height; y += 256) {
+    for (let x = 0; x < canvas.width; x += 256) {
+      drawDamaskMedallion(context, x + 128, y + 128);
+    }
+  }
+
+  const shade = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+  shade.addColorStop(0, "rgba(255,255,255,0.08)");
+  shade.addColorStop(0.5, "rgba(17,34,26,0.1)");
+  shade.addColorStop(1, "rgba(6,18,13,0.26)");
+  context.fillStyle = shade;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawDamaskMedallion(context, x, y) {
+  context.save();
+  context.translate(x, y);
+  context.strokeStyle = "rgba(222, 213, 183, 0.2)";
+  context.fillStyle = "rgba(222, 213, 183, 0.07)";
+  context.lineWidth = 3;
+
+  for (let side = -1; side <= 1; side += 2) {
+    context.beginPath();
+    context.moveTo(0, -88);
+    context.bezierCurveTo(side * 72, -58, side * 64, 22, 0, 88);
+    context.bezierCurveTo(side * 28, 28, side * 28, -32, 0, -88);
+    context.fill();
+    context.stroke();
+  }
+
+  context.beginPath();
+  context.ellipse(0, 0, 34, 88, 0, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+}
+
+function drawArtNouveauWallpaper(context, canvas) {
+  context.fillStyle = "#e7d7c7";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = -20; y < canvas.height + 80; y += 170) {
+    for (let x = 0; x < canvas.width + 120; x += 128) {
+      drawArtNouveauArch(context, x, y);
+    }
+  }
+
+  context.strokeStyle = "rgba(141, 82, 62, 0.15)";
+  context.lineWidth = 1;
+  for (let x = 0; x < canvas.width; x += 64) {
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x, canvas.height);
+    context.stroke();
+  }
+}
+
+function drawArtNouveauArch(context, x, y) {
+  context.save();
+  context.translate(x, y);
+  context.strokeStyle = "rgba(182, 136, 55, 0.46)";
+  context.lineWidth = 4;
+
+  for (let arch = 0; arch < 3; arch += 1) {
+    const radius = 58 - arch * 15;
+    context.beginPath();
+    context.arc(64, 94, radius, Math.PI, 0);
+    context.lineTo(64 + radius, 166);
+    context.moveTo(64 - radius, 94);
+    context.lineTo(64 - radius, 166);
+    context.stroke();
+  }
+
+  context.fillStyle = "rgba(151, 88, 64, 0.12)";
+  context.fillRect(24, 166, 80, 8);
+  context.restore();
+}
+
+function createFloorTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2048;
+  canvas.height = 2048;
+  const context = canvas.getContext("2d");
+
+  const plankHeight = 132;
+  const plankLength = 620;
+  const colors = ["#8f5b32", "#a36b3d", "#754826", "#b27642", "#986037", "#6f4324"];
+
+  context.fillStyle = "#7b4b2b";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let row = 0; row < Math.ceil(canvas.height / plankHeight); row += 1) {
+    const y = row * plankHeight;
+    const offset = (row % 3) * Math.round(plankLength / 3);
+
+    for (let x = -offset; x < canvas.width; x += plankLength) {
+      const color = colors[(row + Math.floor((x + offset) / plankLength)) % colors.length];
+      const gradient = context.createLinearGradient(x, y, x, y + plankHeight);
+      gradient.addColorStop(0, lightenHex(color, 20));
+      gradient.addColorStop(0.18, color);
+      gradient.addColorStop(0.55, lightenHex(color, -10));
+      gradient.addColorStop(1, lightenHex(color, 12));
+
+      context.fillStyle = gradient;
+      context.fillRect(x, y, plankLength, plankHeight);
+
+      context.strokeStyle = "rgba(37, 21, 12, 0.58)";
+      context.lineWidth = 5;
+      context.strokeRect(x + 1, y + 1, plankLength - 2, plankHeight - 2);
+
+      drawWoodGrain(context, x, y, plankLength, plankHeight, row);
+    }
+  }
+
+  const vignette = context.createRadialGradient(1024, 860, 180, 1024, 1024, 1200);
+  vignette.addColorStop(0, "rgba(255, 232, 184, 0.18)");
+  vignette.addColorStop(0.56, "rgba(74, 42, 24, 0.08)");
+  vignette.addColorStop(1, "rgba(28, 16, 10, 0.32)");
+  context.fillStyle = vignette;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1.2, 2.4);
+  return texture;
+}
+
+function drawWoodGrain(context, x, y, width, height, seed) {
+  context.save();
+  context.beginPath();
+  context.rect(x + 6, y + 6, width - 12, height - 12);
+  context.clip();
+
+  for (let line = 0; line < 13; line += 1) {
+    const lineY = y + 18 + ((line * 19 + seed * 7) % Math.max(1, height - 28));
+    context.beginPath();
+    context.moveTo(x + 18, lineY);
+
+    for (let step = 1; step <= 6; step += 1) {
+      const controlX = x + step * (width / 6) - width / 12;
+      const controlY = lineY + Math.sin((step + seed + line) * 1.7) * 9;
+      const nextX = x + step * (width / 6);
+      const nextY = lineY + Math.cos((step * 1.3 + seed + line) * 1.1) * 7;
+      context.quadraticCurveTo(controlX, controlY, nextX, nextY);
+    }
+
+    context.strokeStyle = line % 3 === 0 ? "rgba(255, 218, 160, 0.16)" : "rgba(42, 24, 13, 0.2)";
+    context.lineWidth = line % 3 === 0 ? 2 : 1.2;
+    context.stroke();
+  }
+
+  for (let knot = 0; knot < 2; knot += 1) {
+    const knotX = x + width * (0.28 + ((seed + knot * 2) % 5) * 0.11);
+    const knotY = y + height * (0.32 + ((seed + knot * 3) % 4) * 0.12);
+    context.beginPath();
+    context.ellipse(knotX, knotY, 34, 10, 0.18 * (seed + knot), 0, Math.PI * 2);
+    context.strokeStyle = "rgba(42, 24, 13, 0.28)";
+    context.lineWidth = 3;
+    context.stroke();
+    context.beginPath();
+    context.ellipse(knotX, knotY, 15, 4, 0.18 * (seed + knot), 0, Math.PI * 2);
+    context.strokeStyle = "rgba(255, 220, 166, 0.18)";
+    context.lineWidth = 2;
+    context.stroke();
+  }
+
+  context.restore();
+}
+
+function lightenHex(hex, amount) {
+  const value = Number.parseInt(hex.slice(1), 16);
+  const r = Math.max(0, Math.min(255, (value >> 16) + amount));
+  const g = Math.max(0, Math.min(255, ((value >> 8) & 255) + amount));
+  const b = Math.max(0, Math.min(255, (value & 255) + amount));
+  return `rgb(${r}, ${g}, ${b})`;
 }

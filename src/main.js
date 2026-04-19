@@ -6,12 +6,13 @@ import { initEntryGate } from "./puzzle/entryGate.js";
 import { getAvailablePuzzleImages } from "./puzzle/imageManifest.js";
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {
-  void applySiteAppearance();
+  const appearance = await applySiteAppearance();
 
   const images = getAvailablePuzzleImages();
   const gallery = initGallery({
     root: document.getElementById("gallery-root"),
     images,
+    wallpaper: appearance?.galleryWallpaper,
   });
 
   initEntryGate({

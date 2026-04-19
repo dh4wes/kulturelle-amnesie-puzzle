@@ -57,6 +57,10 @@ function applyBackgroundColor(value) {
   document.documentElement.style.setProperty("--site-background", value);
 }
 
+function normalizeGalleryWallpaper(value) {
+  return ["botanical", "damask", "art-nouveau"].includes(value) ? value : "botanical";
+}
+
 export async function applySiteAppearance() {
   const siteBaseUrl = getSiteBaseUrl();
   const appearanceUrl = new URL("/api/appearance", siteBaseUrl);
@@ -80,11 +84,20 @@ export async function applySiteAppearance() {
 
     if (typeof fontId !== "string" || fontId === "system") {
       applySystemFont();
-      return;
+      return {
+        galleryWallpaper: normalizeGalleryWallpaper(appearance?.galleryWallpaper),
+      };
     }
 
     applySelectedFont(siteBaseUrl, fontId);
+    return {
+      galleryWallpaper: normalizeGalleryWallpaper(appearance?.galleryWallpaper),
+    };
   } catch (error) {
     console.warn("[appearance] Failed to load site appearance.", error);
   }
+
+  return {
+    galleryWallpaper: "botanical",
+  };
 }

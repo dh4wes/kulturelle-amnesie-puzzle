@@ -12,8 +12,8 @@ export function clampPlayerPosition(position, room) {
 export function stepPlayer(position, input, deltaMs, room) {
   const turnInput =
     ("turnAxis" in input ? input.turnAxis : 0) +
-    (input.turnRight ? 1 : 0) -
-    (input.turnLeft ? 1 : 0);
+    (input.turnLeft ? 1 : 0) -
+    (input.turnRight ? 1 : 0);
   const rotationDelta = turnInput * TURN_SPEED * deltaMs;
   const rotation = normalizeAngle(position.rotation + rotationDelta);
   const travel = MOVE_SPEED * deltaMs;
