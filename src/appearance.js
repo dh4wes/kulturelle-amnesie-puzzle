@@ -58,7 +58,7 @@ function applyBackgroundColor(value) {
 }
 
 function normalizeGalleryWallpaper(value) {
-  return ["botanical", "damask", "art-nouveau"].includes(value) ? value : "botanical";
+  return ["botanical", "damask", "art-nouveau", "icons"].includes(value) ? value : "botanical";
 }
 
 export async function applySiteAppearance() {

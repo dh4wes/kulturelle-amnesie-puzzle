@@ -17,15 +17,16 @@ const HALF_WIDTH = (ROOM.maxX - ROOM.minX) * SCALE * 0.5;
 const HALF_DEPTH = (ROOM.maxZ - ROOM.minZ) * SCALE * 0.5;
 const SITE_FALLBACK_URL = "https://webauftritt.vercel.app";
 const NAVIGATION_ITEMS = [
-  { label: "Horch mal", href: "/featured" },
-  { label: "Texte/Gedichte", href: "/works" },
-  { label: "Projekte", href: "/archive" },
-  { label: "Nachrichten", href: "/guestbook" },
-  { label: "Kontakt", href: "/kontakt" },
-  { label: "Fragen; des Monats? des Tages?", href: "/fragen" },
-  { label: "Lebenslauf", href: "/lebenslauf" },
-  { label: "Tattoo", href: "/tattoo" },
+  { label: "Horch mal", href: "/featured", icon: "/icons/menu-1.png" },
+  { label: "Texte/Gedichte", href: "/works", icon: "/icons/menu-2.png" },
+  { label: "Projekte", href: "/archive", icon: "/icons/menu-3.png" },
+  { label: "Nachrichten", href: "/guestbook", icon: "/icons/menu-4.png" },
+  { label: "Kontakt", href: "/kontakt", icon: "/icons/menu-6.png" },
+  { label: "Fragen; des Monats? des Tages?", href: "/fragen", icon: "/icons/menu-8.png" },
+  { label: "Lebenslauf", href: "/lebenslauf", icon: "/icons/menu-7.png" },
+  { label: "Tattoo", href: "/tattoo", icon: "/icons/menu-9.png" },
 ];
+const MENU_ICON_PATHS = Array.from({ length: 9 }, (_, index) => `/icons/menu-${index + 1}.png`);
 
 export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   if (!root) {
@@ -47,6 +48,7 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
   const joystick = root.querySelector("[data-gallery-joystick]");
   const joystickThumb = root.querySelector("[data-gallery-joystick-thumb]");
   const modal = root.querySelector("[data-gallery-modal]");
+  const modalIcon = root.querySelector("[data-gallery-modal-icon]");
   const modalImage = root.querySelector("[data-gallery-modal-image]");
   const modalTitle = root.querySelector("[data-gallery-modal-title]");
   const modalLink = root.querySelector("[data-gallery-link]");
@@ -168,7 +170,9 @@ export function initGallery({ root, images = [], wallpaper = "botanical" }) {
     const imageSrc = resolveArtworkSrc(painting.userData.frame.image);
     const navigationItem = getNavigationItem(painting.userData.frame);
     modal.hidden = false;
-    modalTitle.textContent = title;
+    modalIcon.src = navigationItem.icon;
+    modalIcon.alt = "";
+    modalTitle.textContent = navigationItem.label;
     modalImage.src = imageSrc;
     modalImage.alt = `${title} in Nahansicht`;
     modalLink.textContent = `${navigationItem.label} öffnen`;
@@ -333,8 +337,11 @@ function createGalleryMarkup() {
       <div class="gallery-modal" data-gallery-modal hidden>
         <div class="gallery-modal-card" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title">
           <button type="button" class="gallery-modal-close" data-gallery-close aria-label="Nahansicht schließen">×</button>
-          <h2 id="gallery-modal-title" data-gallery-modal-title></h2>
-          <img data-gallery-modal-image alt="" />
+          <h2 class="gallery-modal-heading">
+            <img class="gallery-modal-icon" data-gallery-modal-icon alt="" />
+            <span id="gallery-modal-title" data-gallery-modal-title></span>
+          </h2>
+          <img class="gallery-modal-artwork" data-gallery-modal-image alt="" />
           <a class="gallery-site-link" data-gallery-link href="${resolveSiteHref(NAVIGATION_ITEMS[0].href)}">${NAVIGATION_ITEMS[0].label} öffnen</a>
         </div>
       </div>
@@ -381,6 +388,11 @@ function buildMiniMapMarkers(frames, mapTrack, mapList, onSelectFrame) {
     marker.style.left = `${roomXToPercent(frame.x)}%`;
     marker.style.top = `${roomZToPercent(frame.z)}%`;
     marker.addEventListener("click", () => onSelectFrame(frame));
+    const markerIcon = document.createElement("img");
+    markerIcon.src = navigationItem.icon;
+    markerIcon.alt = "";
+    markerIcon.loading = "lazy";
+    marker.appendChild(markerIcon);
     const label = document.createElement("span");
     label.className = "sr-only";
     label.textContent = navigationItem.label;
@@ -390,7 +402,13 @@ function buildMiniMapMarkers(frames, mapTrack, mapList, onSelectFrame) {
     const listLink = document.createElement("button");
     listLink.className = "gallery-map-list-link";
     listLink.type = "button";
-    listLink.textContent = navigationItem.label;
+    const listIcon = document.createElement("img");
+    listIcon.src = navigationItem.icon;
+    listIcon.alt = "";
+    listIcon.loading = "lazy";
+    const listLabel = document.createElement("span");
+    listLabel.textContent = navigationItem.label;
+    listLink.append(listIcon, listLabel);
     listLink.addEventListener("click", () => onSelectFrame(frame));
     listFragment.appendChild(listLink);
   });
@@ -655,6 +673,8 @@ function createWallpaperTexture(wallpaper) {
     drawDamaskWallpaper(context, canvas);
   } else if (wallpaper === "art-nouveau") {
     drawArtNouveauWallpaper(context, canvas);
+  } else if (wallpaper === "icons") {
+    drawIconWallpaperBase(context, canvas);
   } else {
     drawBotanicalWallpaper(context, canvas);
   }
@@ -664,7 +684,78 @@ function createWallpaperTexture(wallpaper) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(2.4, 1.8);
+
+  if (wallpaper === "icons") {
+    hydrateIconWallpaper(context, canvas, texture);
+  }
+
   return texture;
+}
+
+function drawIconWallpaperBase(context, canvas) {
+  const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+  background.addColorStop(0, "#efe4d3");
+  background.addColorStop(0.52, "#dfd0bb");
+  background.addColorStop(1, "#efe7d8");
+  context.fillStyle = background;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.strokeStyle = "rgba(99, 74, 49, 0.13)";
+  context.lineWidth = 2;
+
+  for (let y = 72; y < canvas.height; y += 128) {
+    for (let x = 64; x < canvas.width; x += 128) {
+      context.beginPath();
+      context.arc(x, y, 36, 0, Math.PI * 2);
+      context.stroke();
+      context.beginPath();
+      context.arc(x, y, 19, 0, Math.PI * 2);
+      context.stroke();
+    }
+  }
+
+  context.fillStyle = "rgba(255, 250, 239, 0.22)";
+  for (let y = 0; y < canvas.height; y += 128) {
+    context.fillRect(0, y, canvas.width, 1.5);
+  }
+}
+
+function hydrateIconWallpaper(context, canvas, texture) {
+  MENU_ICON_PATHS.forEach((icon, index) => {
+    const image = new Image();
+    image.onload = () => {
+      drawWallpaperIconGrid(context, canvas, image, index);
+      texture.needsUpdate = true;
+    };
+    image.src = icon;
+  });
+}
+
+function drawWallpaperIconGrid(context, canvas, image, index) {
+  const columns = 4;
+  const rows = 4;
+  const cellWidth = canvas.width / columns;
+  const cellHeight = canvas.height / rows;
+  const iconSize = 46;
+  const rowOffset = Math.floor(index / columns) * 56;
+  const colOffset = (index % columns) * 54;
+
+  context.save();
+  context.globalAlpha = 0.24;
+
+  for (let y = -cellHeight; y < canvas.height + cellHeight; y += cellHeight) {
+    for (let x = -cellWidth; x < canvas.width + cellWidth; x += cellWidth) {
+      const drawX = x + 54 + colOffset;
+      const drawY = y + 48 + rowOffset;
+      context.save();
+      context.translate(drawX + iconSize / 2, drawY + iconSize / 2);
+      context.rotate(((index % 3) - 1) * 0.08);
+      context.drawImage(image, -iconSize / 2, -iconSize / 2, iconSize, iconSize);
+      context.restore();
+    }
+  }
+
+  context.restore();
 }
 
 function drawBotanicalWallpaper(context, canvas) {
