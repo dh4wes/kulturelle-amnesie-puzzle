@@ -14,7 +14,6 @@ import {
 } from "./logic.js";
 
 const SESSION_FLAG = "__kulturelle_amnesie_gate_open__";
-const INTRO_OVERLAY_STORAGE_KEY = "__kulturelle_amnesie_intro_overlay_seen__";
 const INTRO_OVERLAY_MS = 7000;
 const MOBILE_MEDIA = "(max-width: 479px)";
 const SOLVED_HOLD_MS = 1200;
@@ -238,35 +237,12 @@ function setupIntroOverlay(gate) {
 
   if (!overlay) return;
 
-  if (hasSeenIntroOverlay()) {
-    overlay.remove();
-    return;
-  }
-
-  markIntroOverlaySeen();
-
   const removeOverlay = () => overlay.remove();
   window.setTimeout(() => {
     overlay.classList.add("is-fading");
     overlay.addEventListener("transitionend", removeOverlay, { once: true });
     window.setTimeout(removeOverlay, 700);
   }, INTRO_OVERLAY_MS);
-}
-
-function hasSeenIntroOverlay() {
-  try {
-    return window.localStorage.getItem(INTRO_OVERLAY_STORAGE_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function markIntroOverlaySeen() {
-  try {
-    window.localStorage.setItem(INTRO_OVERLAY_STORAGE_KEY, "true");
-  } catch {
-    // Storage may be disabled; the overlay can still fade normally for this visit.
-  }
 }
 
 async function pickAndPrepareImage(images) {
