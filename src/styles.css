@@ -445,6 +445,7 @@ body.gate-locked .page-shell {
 
 .gallery-modal-artwork[hidden],
 .gallery-ar-viewer[hidden],
+.gallery-site-link[hidden],
 .gallery-source-link[hidden] {
   display: none;
 }
