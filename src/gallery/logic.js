@@ -1,5 +1,6 @@
 const TURN_SPEED = Math.PI * 0.0014;
 const MOVE_SPEED = 0.42;
+const FRAME_CENTER_Y = 172;
 
 export function clampPlayerPosition(position, room) {
   return {
@@ -45,13 +46,13 @@ export function stepPlayer(position, input, deltaMs, room) {
 
 export function createGalleryFrames(images) {
   const positions = [
-    { wall: "front", x: -250, y: 155, z: -900, rotateY: 0 },
-    { wall: "front", x: 250, y: 155, z: -900, rotateY: 0 },
-    { wall: "left", x: -620, y: 155, z: -360, rotateY: 90 },
-    { wall: "left", x: -620, y: 155, z: 360, rotateY: 90 },
-    { wall: "right", x: 620, y: 155, z: -360, rotateY: -90 },
-    { wall: "right", x: 620, y: 155, z: 360, rotateY: -90 },
-    { wall: "back", x: 0, y: 155, z: 900, rotateY: 180 },
+    { wall: "front", x: -250, y: FRAME_CENTER_Y, z: -900, rotateY: 0 },
+    { wall: "front", x: 250, y: FRAME_CENTER_Y, z: -900, rotateY: 0 },
+    { wall: "left", x: -620, y: FRAME_CENTER_Y, z: -360, rotateY: 90 },
+    { wall: "left", x: -620, y: FRAME_CENTER_Y, z: 360, rotateY: 90 },
+    { wall: "right", x: 620, y: FRAME_CENTER_Y, z: -360, rotateY: -90 },
+    { wall: "right", x: 620, y: FRAME_CENTER_Y, z: 360, rotateY: -90 },
+    { wall: "back", x: 0, y: FRAME_CENTER_Y, z: 900, rotateY: 180 },
   ];
 
   return images.map((image, index) => ({
